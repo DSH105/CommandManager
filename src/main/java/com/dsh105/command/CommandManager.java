@@ -29,25 +29,27 @@ import org.bukkit.plugin.Plugin;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class CommandManager implements CommandExecutor {
 
-    private final static Logger LOGGER = Logger.getLogger("UnitCommand");
+    private final static Logger LOGGER = Logger.getLogger("CommandManager");
 
     private final ArrayList<CommandListener> COMMANDS = new ArrayList<>();
-
-    private Plugin plugin;
-    private Paginator<PowerMessage> paginator = new Paginator<>();
+    private final HashMap<CommandListener, CommandMethod> SUB_COMMANDS = new HashMap<>();
 
     /*
      * Messages
      */
-    private String noPermissionMessage = "{c1}You are not permitted to do that.";
-    private String noAccessMessage = "{c1}You do not have access to this from here.";
-    private String errorMessage = "{c1}Something unexpected happened. Please see the console for any errors and report them immediately.";
-    private String commandNotFoundMessage = "{c1}That command does not exist.";
+    private String noPermissionMessage = "You are not permitted to do that.";
+    private String noAccessMessage = "You do not have access to this from here.";
+    private String errorMessage = "Something unexpected happened. Please see the console for any errors and report them immediately.";
+    private String commandNotFoundMessage = "That command does not exist.";
+
+    private Plugin plugin;
+    private Paginator<PowerMessage> paginator = new Paginator<>();
 
     private String responsePrefix;
     private boolean suggestCommands;
@@ -271,18 +273,16 @@ public class CommandManager implements CommandExecutor {
                     return null;
                 }
             }
-
-            Target target = method.getAccessor().getAnnotation(Target.class);
-            if (target != null) {
-                if (!target.target().isAssignableFrom(commandEvent.sender().getClass())) {
-                    if (!target.accessMessage().isEmpty()) {
-                        commandEvent.respond(ResponseLevel.SEVERE, target.accessMessage());
-                        return null;
-                    }
-                    continue;
-                }
-            }
             return method;
+        }
+        return null;
+    }
+
+    public Method getParentCommandMethod(CommandListener commandListener) {
+        for (Method method : commandListener.getClass().getDeclaredMethods()) {
+            if (method.getAnnotation(ParentCommand.class) != null) {
+                return method;
+            }
         }
         return null;
     }
@@ -313,17 +313,31 @@ public class CommandManager implements CommandExecutor {
     }
 
     public <T extends CommandSender> boolean onCommand(CommandEvent<T> commandEvent) {
+        Method commandMethod = null;
+        Command cmd = null;
         try {
             CommandListener commandListener = getCommandFor(commandEvent.command());
-            CommandMethod commandMethod = getCommandMethod(commandListener, commandEvent);
-            if (commandMethod != null) {
-                Command cmd = commandMethod.getCommand();
+            if (commandEvent.argsLength() == 0) {
+                Method parentMethod = getParentCommandMethod(commandListener);
+                if (getParentCommandMethod(commandListener) != null) {
+                    commandMethod = parentMethod;
+                    cmd = parentMethod.getAnnotation(Command.class);
+                }
+            } else {
+                CommandMethod command = getCommandMethod(commandListener, commandEvent);
+                if (command == null) {
+                    return false;
+                }
+                cmd = command.getCommand();
+                commandMethod = command.getAccessor();
+            }
+            if (cmd != null && commandMethod != null) {
                 if (!cmd.permission().isEmpty()) {
                     if (!commandEvent.canPerform(cmd.permission())) {
                         return true;
                     }
                 }
-                if (!(boolean) commandMethod.getAccessor().invoke(commandEvent)) {
+                if (!(boolean) commandMethod.invoke(commandEvent)) {
                     commandEvent.respond(cmd.usage());
                 }
 
@@ -352,10 +366,7 @@ public class CommandManager implements CommandExecutor {
                     Suggestion suggestion = new Suggestion(cmd.command(), possibleSuggestions.toArray(new String[0]));
                     commandEvent.respond(ResponseLevel.SEVERE, "{c1}Did you mean: " + ChatColor.ITALIC + StringUtil.combineArray(0, suggestion.getSuggestions(), ChatColor.RESET + "{c1}, " + ChatColor.ITALIC));
                 }
-                return true;
             }
-
-
         } catch (Exception e) {
             commandEvent.respond(ResponseLevel.SEVERE, getErrorMessage());
             return true;

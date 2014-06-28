@@ -17,17 +17,13 @@
 
 package com.dsh105.command;
 
-import org.bukkit.command.CommandSender;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@java.lang.annotation.Target(ElementType.TYPE)
-public @interface Target {
+@Target(ElementType.METHOD)
+public @interface ParentCommand {
 
-    public Class<? extends CommandSender> target() default CommandSender.class;
-
-    public String accessMessage() default "";
 }

@@ -30,8 +30,6 @@ public @interface Command {
 
     String description();
 
-    boolean parent() default false;
-
     String permission() default "";
 
     String[] aliases() default "";

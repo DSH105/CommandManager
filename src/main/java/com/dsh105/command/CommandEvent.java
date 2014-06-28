@@ -96,7 +96,7 @@ public class CommandEvent<T extends CommandSender> {
     }
 
     public void respond(String response, ChatColor formatColour, ChatColor highlightColour) {
-        String message = response.replace("{c1}", "" + formatColour).replace("{c2}", "" + highlightColour);
+        String message = formatColour + response.replace("{c1}", "" + formatColour).replace("{c2}", "" + highlightColour);
 
         // Take care of any conversions, special formatting, etc.
         new MarkupBuilder().withText(manager.getResponsePrefix() + " " + ChatColor.RESET + message).build().send(sender());
