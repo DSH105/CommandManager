@@ -36,6 +36,8 @@ public class ExampleCommand implements CommandListener {
     public ExampleCommand() {
         // We'll just pretend we're doing something useful here...
         PRETEND_MANAGER.register(this);
+
+        new ExampleTwoCommand(this);
     }
 
     @ParentCommand
@@ -66,5 +68,24 @@ public class ExampleCommand implements CommandListener {
     public boolean playerOnlyCommand(CommandEvent<Player> event) {
         event.respond("Looks like you're logged in correctly :)");
         return true;
+    }
+
+    public class ExampleTwoCommand implements CommandListener {
+
+        public ExampleTwoCommand(ExampleCommand exampleCommand) {
+            // Register all valid sub commands in this class to the parent
+            PRETEND_MANAGER.registerSubCommands(exampleCommand, this);
+        }
+
+        @Command(
+                command = "two",
+                description = "Number the second one",
+                permission = "example.command.two",
+                aliases = "t"
+        )
+        public boolean twoCommand(CommandEvent event) {
+            event.respond("Such two. Much command. Wow");
+            return true;
+        }
     }
 }
