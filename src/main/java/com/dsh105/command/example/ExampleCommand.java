@@ -31,7 +31,7 @@ import org.bukkit.entity.Player;
 )
 public class ExampleCommand implements CommandListener {
 
-    private final CommandManager PRETEND_MANAGER = new CommandManager(null, "Example"); // Don't ever do this; your plugin should not be null
+    private final ICommandManager PRETEND_MANAGER = new CommandManager(null, "Example"); // Don't ever do this; your plugin should not be null
 
     public ExampleCommand() {
         // We'll just pretend we're doing something useful here...

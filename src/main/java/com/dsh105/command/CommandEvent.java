@@ -19,8 +19,6 @@ package com.dsh105.command;
 
 import com.dsh105.commodus.StringUtil;
 import com.dsh105.powermessage.markup.MarkupBuilder;
-import com.dsh105.command.CommandManager;
-import com.dsh105.command.ResponseLevel;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -47,7 +45,7 @@ public class CommandEvent<T extends CommandSender> {
         this.args = args;
     }
 
-    public CommandManager getManager() {
+    public ICommandManager getManager() {
         return manager;
     }
 
