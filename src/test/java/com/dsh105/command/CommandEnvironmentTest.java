@@ -34,13 +34,12 @@ public class CommandEnvironmentTest {
     }
 
     @Test
-    public void testCommand() {
-        CommandManager manager = new CommandManager(null); // lel what am I doing
-        manager.register(new CommandTest());
+    public void testCommands() {
+        getMockedManager().register(new CommandTest());
 
         for (String command : new String[]{"parent", "variable wow", "v wow", "variable"}) {
             System.out.println("Testing command: \"/" + command + "\"");
-            System.out.println("Result: " + manager.onCommand(new MockCommandEvent(getMockedManager(), command, mock(CommandSender.class))));
+            System.out.println("Result: " + getMockedManager().onCommand(new MockCommandEvent(getMockedManager(), command, mock(CommandSender.class))));
         }
     }
 }
