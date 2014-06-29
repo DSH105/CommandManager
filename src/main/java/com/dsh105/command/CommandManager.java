@@ -382,6 +382,7 @@ public class CommandManager implements ICommandManager {
             }
 
             Command cmd = method.getCommand();
+            VariableMatcher variableMatcher = new VariableMatcher(cmd, event);
 
             ArrayList<String[]> aliases = new ArrayList<>();
             for (String alias : cmd.aliases()) {
@@ -392,10 +393,15 @@ public class CommandManager implements ICommandManager {
                 // Multi-command arguments that MATCH are more important
                 if (args.length > 1) {
                     for (int i = 0; i <= event.argsLength() && i <= args.length; i++) {
+
                         // Check if the iteration is at its end
                         if (i == event.argsLength() || i == args.length) {
-                            // We found a match, yay
-                            return method;
+
+                            // Test for any regex values and check if they meet the requirements
+                            if (variableMatcher.testRegexVariables()) {
+                                // We found a match, yay
+                                return method;
+                            }
                         }
                         if (!matches(event.arg(i), args[i], false)) {
                             break;
@@ -433,7 +439,13 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public boolean isValid(CommandMethod commandMethod, Class<? extends CommandEvent> type) {
-        return commandMethod.getAccessor().getReturnType().equals(Boolean.class) && commandMethod.getAccessor().getParameterTypes().length == 1 && type.isAssignableFrom(commandMethod.getAccessor().getParameterTypes()[0]);
+        Method accessor = commandMethod.getAccessor();
+        if (accessor.getReturnType().equals(Boolean.class)) {
+            if (accessor.getParameterTypes().length > 1) {
+                return type.isAssignableFrom(accessor.getParameterTypes()[0]) && (accessor.getParameterTypes().length == 1 || (accessor.getParameterTypes().length == 2 && Map.class.isAssignableFrom(accessor.getParameterTypes()[1])));
+            }
+        }
+        return false;
     }
 
     @Override
@@ -457,6 +469,10 @@ public class CommandManager implements ICommandManager {
             CommandMethod commandMethod = getCommandMethod(commandListener, event);
             if (commandMethod != null) {
                 Command command = commandMethod.getCommand();
+
+                // Pair up a final matcher that the listener can use
+                event.setVariableMatcher(new VariableMatcher(command, event));
+
                 if (command.permission().isEmpty() || event.canPerform(command.permission())) {
                     try {
                         if (!(boolean) commandMethod.getAccessor().invoke(event)) {
@@ -467,6 +483,7 @@ public class CommandManager implements ICommandManager {
                         e.printStackTrace();
                     }
                 }
+
                 return true;
             }
         }
@@ -489,7 +506,7 @@ public class CommandManager implements ICommandManager {
             Suggestion suggestion = new Suggestion(event.command(), possibleSuggestions.toArray(StringUtil.EMPTY_STRING_ARRAY));
             event.respond(ResponseLevel.SEVERE, "Did you mean: " + ChatColor.ITALIC + StringUtil.combineArray(0, suggestion.getSuggestions(), ChatColor.RESET + "{c1}, " + ChatColor.ITALIC));
         }
-        return false;
+        return true;
     }
 
     @Override

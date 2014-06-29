@@ -24,12 +24,18 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class CommandEvent<T extends CommandSender> {
 
+    private String input;
     private CommandManager manager;
     private String command;
     private T sender;
     private String[] args;
+
+    private VariableMatcher variableMatcher;
 
     public CommandEvent(CommandManager manager, String args, T sender) {
         this(manager, sender, args.replaceAll("\\s+", "").split("\\s"));
@@ -44,6 +50,11 @@ public class CommandEvent<T extends CommandSender> {
         this.command = command;
         this.sender = sender;
         this.args = args;
+
+        ArrayList<String> argsList = new ArrayList<>();
+        argsList.add(command);
+        argsList.addAll(Arrays.asList(args));
+        input = StringUtil.join(argsList, " ");
     }
 
     public Plugin getPlugin() {
@@ -54,12 +65,28 @@ public class CommandEvent<T extends CommandSender> {
         return manager;
     }
 
+    protected void setVariableMatcher(VariableMatcher variableMatcher) {
+        this.variableMatcher = variableMatcher;
+    }
+
+    public VariableMatcher getVariableMatcher() {
+        return variableMatcher;
+    }
+
+    public String variable(String variable) {
+        return variableMatcher.getMatchedArguments().get(variable);
+    }
+
     public String command() {
         return command;
     }
 
     public T sender() {
         return sender;
+    }
+
+    public String input() {
+        return input;
     }
 
     public String[] args() {
