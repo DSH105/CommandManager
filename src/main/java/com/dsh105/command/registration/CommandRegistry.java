@@ -27,7 +27,7 @@ import org.bukkit.plugin.Plugin;
 /**
  * Thanks @CaptainBern <3
  */
-public class CommandRegistrary {
+public class CommandRegistry {
 
     protected static final FieldAccessor<CommandMap> SERVER_COMMAND_MAP = new Reflection().reflect(Bukkit.getServer().getPluginManager().getClass()).getSafeFieldByNameAndType("commandMap", CommandMap.class).getAccessor();
 
@@ -35,7 +35,7 @@ public class CommandRegistrary {
 
     private final Plugin plugin;
 
-    public CommandRegistrary(Plugin plugin) {
+    public CommandRegistry(Plugin plugin) {
         this.plugin = plugin;
     }
 

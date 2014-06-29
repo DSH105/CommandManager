@@ -88,4 +88,25 @@ public class ExampleCommand implements CommandListener {
             return true;
         }
     }
+
+    public class ExampleThreeCommand implements CommandListener {
+
+        public ExampleThreeCommand(ExampleCommand exampleCommand) {
+            // Register all valid sub commands in this class to the parent
+            PRETEND_MANAGER.register(this);
+        }
+
+        // This listener *should* take precedence over the one above IF (and only if) "example something" is fired (not just "example")
+        // It becomse interesting here when making decisions on whether to use the multi-argument command listener
+        @Command(
+                command = "example something",
+                description = "Number the second one",
+                permission = "example.command.two",
+                aliases = "three" // So either "example something" or "three" can be entered to fire this off
+        )
+        public boolean twoCommand(CommandEvent event) {
+            event.respond("Such two. Much command. Wow");
+            return true;
+        }
+    }
 }

@@ -22,13 +22,16 @@ import com.dsh105.powermessage.core.PowerMessage;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public interface ICommandManager extends CommandExecutor {
+public interface ICommandManager<T extends Plugin> extends CommandExecutor {
+
+    T getPlugin();
 
     List<CommandListener> getRegisteredCommands();
 

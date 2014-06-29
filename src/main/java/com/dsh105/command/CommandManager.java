@@ -19,6 +19,8 @@ package com.dsh105.command;
 
 import com.captainbern.reflection.Reflection;
 import com.dsh105.command.exceptions.CommandInvalidException;
+import com.dsh105.command.registration.CommandRegistry;
+import com.dsh105.command.registration.DynamicPluginCommand;
 import com.dsh105.commodus.StringUtil;
 import com.dsh105.commodus.paginator.Paginator;
 import com.dsh105.powermessage.core.PowerMessage;
@@ -30,10 +32,13 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class CommandManager implements ICommandManager {
+public class CommandManager<T extends Plugin> implements ICommandManager<T> {
 
     private final static Logger LOGGER = Logger.getLogger("CommandManager");
 
+    private final static String INVALID_COMMAND_WARNING = "%s has registered an invalid command: %s -> %s. %s";
+
+    private final CommandRegistry REGISTRY;
     private final ArrayList<CommandListener> COMMANDS = new ArrayList<>();
     private final HashMap<CommandListener, CommandMethod> SUB_COMMANDS = new HashMap<>();
 
@@ -45,7 +50,7 @@ public class CommandManager implements ICommandManager {
     private String errorMessage = "Something unexpected happened. Please see the console for any errors and report them immediately.";
     private String commandNotFoundMessage = "That command does not exist.";
 
-    private Plugin plugin;
+    private T owningPlugin;
     private Paginator<PowerMessage> paginator = new Paginator<>();
 
     private String responsePrefix;
@@ -53,13 +58,19 @@ public class CommandManager implements ICommandManager {
     private ChatColor highlightColour = ChatColor.WHITE;
     private ChatColor formatColour = ChatColor.WHITE;
 
-    public CommandManager(Plugin plugin) {
-        this.plugin = plugin;
+    public CommandManager(T owningPlugin) {
+        this.owningPlugin = owningPlugin;
+        REGISTRY = new CommandRegistry(owningPlugin);
     }
 
-    public CommandManager(Plugin plugin, String responsePrefix) {
-        this(plugin);
+    public CommandManager(T owningPlugin, String responsePrefix) {
+        this(owningPlugin);
         this.responsePrefix = responsePrefix;
+    }
+
+    @Override
+    public T getPlugin() {
+        return owningPlugin;
     }
 
     @Override
@@ -170,15 +181,23 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public void register(CommandListener commandListener) {
+        ArrayList<CommandMethod> bukkitRegistration = new ArrayList<>();
+        if (getCommandMethods(commandListener).isEmpty()) {
+            LOGGER.warning(owningPlugin.getName() + " has registered a command listener with no valid command methods: " + commandListener.getClass().getCanonicalName() + ".");
+        }
         for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
             if (!isValid(commandMethod)) {
-                throw new CommandInvalidException(plugin.getName() + " has registered an invalid command: " + commandListener.getClass().getCanonicalName() + " -> " + commandMethod.getAccessor().getName() + ". Command method can only have one parameter that MUST extend " + CommandEvent.class.getCanonicalName() + " and return a BOOLEAN.");
+                throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), "Command method can only have one parameter that MUST extend " + CommandEvent.class.getCanonicalName() + " and return a BOOLEAN."));
             }
-        }
-        if (getCommandMethods(commandListener).isEmpty()) {
-            LOGGER.warning(plugin.getName() + " has registered a command listener with no valid command methods: " + commandListener.getClass().getCanonicalName() + ".");
+            bukkitRegistration.add(commandMethod);
         }
         COMMANDS.add(commandListener);
+
+        // Register all commands to Bukkit
+        for (CommandMethod commandMethod : bukkitRegistration) {
+            Command command = commandMethod.getCommand();
+            REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], command.aliases(), command.description(), command.usage(), this, owningPlugin));
+        }
     }
 
     @Override
@@ -205,12 +224,12 @@ public class CommandManager implements ICommandManager {
         Method method = new Reflection().reflect(parentClass).getSafeMethod(methodName).member();
         Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
-            throw new CommandInvalidException(plugin.getName() + " has attempted to register an invalid command to " + registerTo.getClass().getCanonicalName() + ": " + parentClass.getCanonicalName() + "#" + methodName + ". Method must have a @Command annotation");
+            throw new CommandInvalidException(owningPlugin.getName() + " has attempted to register an invalid command to " + registerTo.getClass().getCanonicalName() + ": " + parentClass.getCanonicalName() + " -> " + methodName + ". Method must have a @Command annotation");
         }
 
         CommandMethod commandMethod = new CommandMethod(cmd, method);
         if (!isValid(commandMethod)) {
-            throw new CommandInvalidException(plugin.getName() + " has attempted to register an invalid command to " + registerTo.getClass().getCanonicalName() + ": " + parentClass.getCanonicalName() + "#" + methodName + ". Command method can only have one parameter that MUST extend " + CommandEvent.class.getCanonicalName() + " and return a BOOLEAN.");
+            throw new CommandInvalidException(owningPlugin.getName() + " has attempted to register an invalid command to " + registerTo.getClass().getCanonicalName() + ": " + parentClass.getCanonicalName() + " -> " + methodName + ". Command method can only have one parameter that MUST extend " + CommandEvent.class.getCanonicalName() + " and return a BOOLEAN.");
         }
         SUB_COMMANDS.put(registerTo, commandMethod);
     }
@@ -269,28 +288,28 @@ public class CommandManager implements ICommandManager {
             for (CommandMethod method : getCommandMethods(commandListener)) {
                 Command cmd = method.getCommand();
                 if (parent != null) {
-                    if (matches(parent.command(), command, false)) {
+                    if (matches(parent.command().split("\\s")[0], command, false)) {
                         matches.add(commandListener);
                     }
                 }
-                if (matches(cmd.command(), command, false)) {
+                if (matches(cmd.command().split("\\s")[0], command, false)) {
                     matches.add(commandListener);
                 }
 
                 for (String alias : method.getCommand().aliases()) {
-                    if (matches(alias, command, false)) {
+                    if (matches(alias.split("\\s")[0], command, false)) {
                         matches.add(commandListener);
                         break;
                     }
                 }
 
-                if (matches(cmd.command(), command, true)) {
+                if (matches(cmd.command().split("\\s")[0], command, true)) {
                     fuzzyMatches.add(commandListener);
                     continue;
                 }
 
                 for (String alias : method.getCommand().aliases()) {
-                    if (matches(alias, command, true)) {
+                    if (matches(alias.split("\\s")[0], command, true)) {
                         fuzzyMatches.add(commandListener);
                         break;
                     }
@@ -302,7 +321,7 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public boolean matches(String test, String match, boolean fuzzy) {
-        return test.equalsIgnoreCase(match) || (fuzzy ? match.toLowerCase().startsWith(test.toLowerCase()) : false);
+        return test.equalsIgnoreCase(match) || (fuzzy && match.toLowerCase().startsWith(test.toLowerCase()));
     }
 
     @Override
@@ -325,6 +344,7 @@ public class CommandManager implements ICommandManager {
         return getCommandsFor(commandList, command, useAliases, true);
     }
 
+    // TODO: Some caching here?
     @Override
     public ArrayList<CommandMethod> getCommandMethods(CommandListener commandListener) {
         ArrayList<CommandMethod> methods = new ArrayList<>();
@@ -350,27 +370,32 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public CommandMethod getCommandMethod(CommandListener commandListener, CommandEvent event) {
-        methodSearch: for (CommandMethod method : getCommandMethods(commandListener)) {
+        for (CommandMethod method : getCommandMethods(commandListener)) {
             if (!isValid(method, event)) {
                 continue;
             }
 
             Command cmd = method.getCommand();
 
-            String[] cmdArgs = cmd.command().split("\\s");
-            if (cmdArgs.length == 0) {
-                if (!matches(event.command(), cmd.command(), false)) {
-                    continue;
-                }
-            } else {
-                // Match up multi-argument command listeners
-                for (int i = 0; i < event.argsLength() && (i + 1) < cmdArgs.length; i++) {
-                    if (!matches(event.arg(i), cmdArgs[i + 1], false)) {
-                        continue methodSearch;
+            for (String[] args : new String[][] {cmd.command().split("\\s"), cmd.aliases()}) {
+                // Multi-command arguments that MATCH are more important
+                if (args.length > 1) {
+                    for (int i = 0; i <= event.argsLength() && i <= args.length; i++) {
+                        // Check if the iteration is at its end
+                        if (i == event.argsLength() || i == args.length) {
+                            // We found a match, yay
+                            return method;
+                        }
+                        if (!matches(event.arg(i), args[i], false)) {
+                            break;
+                        }
+                    }
+                } else {
+                    if (matches(event.command(), args[0], false)) {
+                        return method;
                     }
                 }
             }
-            return method;
         }
         return null;
     }
