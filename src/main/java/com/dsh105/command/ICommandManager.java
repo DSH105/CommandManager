@@ -86,25 +86,25 @@ public interface ICommandManager extends CommandExecutor {
 
     <T extends CommandListener> T getCommandOfType(Class<T> type);
 
-    CommandListener getCommandFor(String commandArguments);
+    ArrayList<CommandListener> getCommandsFor(String commandArguments);
 
-    CommandListener getCommandFor(String commandArguments, boolean useAliases);
+    ArrayList<CommandListener> getCommandsFor(String commandArguments, boolean useAliases);
 
-    <T extends CommandListener> T getCommandFor(ArrayList<T> commandList, String command);
+    <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command);
 
-    <T extends CommandListener> T getCommandFor(ArrayList<T> commandList, String command, boolean useAliases);
+    <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command, boolean useAliases);
 
-    <T extends CommandListener> T getCommandFor(ArrayList<T> commandList, String command, boolean useAliases, boolean fuzzyMatching);
+    <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command, boolean useAliases, boolean fuzzyMatching);
 
     boolean matches(String test, String match, boolean fuzzy);
 
-    CommandListener matchCommand(String commandArguments);
+    ArrayList<CommandListener> getCommandMatchesFor(String commandArguments);
 
-    CommandListener matchCommand(String commandArguments, boolean useAliases);
+    ArrayList<CommandListener> getCommandMatchesFor(String commandArguments, boolean useAliases);
 
-    <T extends CommandListener> T matchCommand(ArrayList<T> commandList, String command);
+    <T extends CommandListener> ArrayList<T> getCommandMatchesFor(ArrayList<T> commandList, String command);
 
-    <T extends CommandListener> T matchCommand(ArrayList<T> commandList, String command, boolean useAliases);
+    <T extends CommandListener> ArrayList<T> getCommandMatchesFor(ArrayList<T> commandList, String command, boolean useAliases);
 
     ArrayList<CommandMethod> getCommandMethods(CommandListener commandListener);
 

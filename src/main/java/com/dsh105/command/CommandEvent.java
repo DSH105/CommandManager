@@ -31,7 +31,7 @@ public class CommandEvent<T extends CommandSender> {
     private String[] args;
 
     public CommandEvent(CommandManager manager, String args, T sender) {
-        this(manager, sender, args.split("\\s"));
+        this(manager, sender, args.replaceAll("\\s+", "").split("\\s"));
     }
 
     public CommandEvent(CommandManager manager, T sender, String... args) {

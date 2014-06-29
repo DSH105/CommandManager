@@ -241,87 +241,88 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public CommandListener getCommandFor(String commandArguments) {
-        return getCommandFor(COMMANDS, commandArguments);
+    public ArrayList<CommandListener> getCommandsFor(String commandArguments) {
+        return getCommandsFor(COMMANDS, commandArguments);
     }
 
     @Override
-    public CommandListener getCommandFor(String commandArguments, boolean useAliases) {
-        return getCommandFor(COMMANDS, commandArguments, useAliases);
+    public ArrayList<CommandListener> getCommandsFor(String commandArguments, boolean useAliases) {
+        return getCommandsFor(COMMANDS, commandArguments, useAliases);
     }
 
     @Override
-    public <T extends CommandListener> T getCommandFor(ArrayList<T> commandList, String command) {
-        return getCommandFor(commandList, command, true);
+    public <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command) {
+        return getCommandsFor(commandList, command, true);
     }
 
     @Override
-    public <T extends CommandListener> T getCommandFor(ArrayList<T> commandList, String command, boolean useAliases) {
-        return getCommandFor(commandList, command, useAliases, false);
+    public <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command, boolean useAliases) {
+        return getCommandsFor(commandList, command, useAliases, false);
     }
 
-    // TODO: Handle multiple methods having the same command name
     @Override
-    public <T extends CommandListener> T getCommandFor(ArrayList<T> commandList, String command, boolean useAliases, boolean fuzzyMatching) {
-        T fuzzyMatch = null;
+    public <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command, boolean useAliases, boolean fuzzyMatching) {
+        ArrayList<T> matches = new ArrayList<>();
+        ArrayList<T> fuzzyMatches = new ArrayList<>();
         for (T commandListener : commandList) {
             Command parent = commandListener.getClass().getAnnotation(Command.class);
             for (CommandMethod method : getCommandMethods(commandListener)) {
                 Command cmd = method.getCommand();
                 if (parent != null) {
                     if (matches(parent.command(), command, false)) {
-                        return commandListener;
+                        matches.add(commandListener);
                     }
                 }
                 if (matches(cmd.command(), command, false)) {
-                    return commandListener;
+                    matches.add(commandListener);
                 }
 
                 for (String alias : method.getCommand().aliases()) {
                     if (matches(alias, command, false)) {
-                        return commandListener;
+                        matches.add(commandListener);
+                        break;
                     }
                 }
 
                 if (matches(cmd.command(), command, true)) {
-                    fuzzyMatch = commandListener;
+                    fuzzyMatches.add(commandListener);
                     continue;
                 }
 
                 for (String alias : method.getCommand().aliases()) {
                     if (matches(alias, command, true)) {
-                        fuzzyMatch = commandListener;
+                        fuzzyMatches.add(commandListener);
                         break;
                     }
                 }
             }
         }
-        return fuzzyMatching ? fuzzyMatch : null;
+        return fuzzyMatching && matches.isEmpty() ? fuzzyMatches : matches;
     }
 
     @Override
     public boolean matches(String test, String match, boolean fuzzy) {
-        return fuzzy ? match.toLowerCase().startsWith(test.toLowerCase()) : test.equalsIgnoreCase(match);
+        return test.equalsIgnoreCase(match) || (fuzzy ? match.toLowerCase().startsWith(test.toLowerCase()) : false);
     }
 
     @Override
-    public CommandListener matchCommand(String commandArguments) {
-        return matchCommand(commandArguments, false);
+    public ArrayList<CommandListener> getCommandMatchesFor(String commandArguments) {
+        return getCommandMatchesFor(commandArguments, false);
     }
 
     @Override
-    public CommandListener matchCommand(String commandArguments, boolean useAliases) {
-        return matchCommand(COMMANDS, commandArguments, useAliases);
+    public ArrayList<CommandListener> getCommandMatchesFor(String commandArguments, boolean useAliases) {
+        return getCommandMatchesFor(COMMANDS, commandArguments, useAliases);
     }
 
     @Override
-    public <T extends CommandListener> T matchCommand(ArrayList<T> commandList, String command) {
-        return getCommandFor(commandList, command, true);
+    public <T extends CommandListener> ArrayList<T> getCommandMatchesFor(ArrayList<T> commandList, String command) {
+        return getCommandsFor(commandList, command, true);
     }
 
     @Override
-    public <T extends CommandListener> T matchCommand(ArrayList<T> commandList, String command, boolean useAliases) {
-        return getCommandFor(commandList, command, useAliases, true);
+    public <T extends CommandListener> ArrayList<T> getCommandMatchesFor(ArrayList<T> commandList, String command, boolean useAliases) {
+        return getCommandsFor(commandList, command, useAliases, true);
     }
 
     @Override
@@ -331,6 +332,11 @@ public class CommandManager implements ICommandManager {
             Command cmd = method.getAnnotation(Command.class);
             if (cmd != null) {
                 methods.add(new CommandMethod(cmd, method));
+            }
+
+            ParentCommand parentCommand = method.getAnnotation(ParentCommand.class);
+            if (parentCommand != null) {
+                methods.add(new CommandMethod(commandListener.getClass().getAnnotation(Command.class), method));
             }
         }
 
@@ -343,22 +349,25 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public CommandMethod getCommandMethod(CommandListener commandListener, CommandEvent commandEvent) {
-        for (CommandMethod method : getCommandMethods(commandListener)) {
-            if (!isValid(method, commandEvent)) {
-                return null;
+    public CommandMethod getCommandMethod(CommandListener commandListener, CommandEvent event) {
+        methodSearch: for (CommandMethod method : getCommandMethods(commandListener)) {
+            if (!isValid(method, event)) {
+                continue;
             }
 
-            Command parent = commandListener.getClass().getAnnotation(Command.class);
             Command cmd = method.getCommand();
 
-            if (parent != null) {
-                if (commandEvent.argsLength() <= 0) {
-                    if (!cmd.command().equalsIgnoreCase("")) {
-                        return null;
+            String[] cmdArgs = cmd.command().split("\\s");
+            if (cmdArgs.length == 0) {
+                if (!matches(event.command(), cmd.command(), false)) {
+                    continue;
+                }
+            } else {
+                // Match up multi-argument command listeners
+                for (int i = 0; i < event.argsLength() && (i + 1) < cmdArgs.length; i++) {
+                    if (!matches(event.arg(i), cmdArgs[i + 1], false)) {
+                        continue methodSearch;
                     }
-                } else if (!matches(commandEvent.arg(0), commandEvent.command(), false)) {
-                    return null;
                 }
             }
             return method;
@@ -397,75 +406,52 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String commandLabel, String[] args) {
+        return onCommand(sender, StringUtil.combineArray(0, " ", args));
+    }
+
+    @Override
     public <T extends CommandSender> boolean onCommand(T sender, String args) {
         return onCommand(new CommandEvent<>(this, sender, args));
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String commandLabel, String[] args) {
-        return onCommand(new CommandEvent<>(this, sender, args));
-    }
-
-    @Override
-    public <T extends CommandSender> boolean onCommand(CommandEvent<T> commandEvent) {
-        Method method = null;
-        Command cmd = null;
-        try {
-            CommandListener commandListener = getCommandFor(commandEvent.command());
-            if (commandEvent.argsLength() == 0) {
-                Method parentMethod = getParentCommandMethod(commandListener);
-                if (getParentCommandMethod(commandListener) != null) {
-                    method = parentMethod;
-                    cmd = parentMethod.getAnnotation(Command.class);
-                }
-            } else {
-                CommandMethod command = getCommandMethod(commandListener, commandEvent);
-                if (command == null) {
-                    return false;
-                }
-                cmd = command.getCommand();
-                method = command.getAccessor();
-            }
-
-            if (cmd != null && method != null) {
-                if (!cmd.permission().isEmpty()) {
-                    if (!commandEvent.canPerform(cmd.permission())) {
-                        return true;
+    public <T extends CommandSender> boolean onCommand(CommandEvent<T> event) {
+        for (CommandListener commandListener : getCommandsFor(event.command())) {
+            CommandMethod commandMethod = getCommandMethod(commandListener, event);
+            if (commandMethod != null) {
+                Command command = commandMethod.getCommand();
+                if (command.permission().isEmpty() || event.canPerform(command.permission())) {
+                    try {
+                        if (!(boolean) commandMethod.getAccessor().invoke(event)) {
+                            event.respond(command.usage());
+                        }
+                    } catch (Exception e) {
+                        event.respond(ResponseLevel.SEVERE, getErrorMessage());
+                        e.printStackTrace();
                     }
                 }
-                if (!(boolean) method.invoke(commandEvent)) {
-                    commandEvent.respond(cmd.usage());
+                return true;
+            }
+        }
+
+        // The command wasn't found :(
+        event.respond(ResponseLevel.SEVERE, getCommandNotFoundMessage());
+
+        if (willSuggestCommands()) {
+            ArrayList<String> possibleSuggestions = new ArrayList<>();
+            for (CommandListener listener : getRegisteredCommands()) {
+                if (isParent(listener)) {
+                    possibleSuggestions.add(listener.getClass().getAnnotation(Command.class).command());
                 }
-
-                commandEvent.respond(ResponseLevel.SEVERE, getCommandNotFoundMessage());
-
-                if (willSuggestCommands()) {
-                    ArrayList<String> possibleSuggestions = new ArrayList<>();
-                    if (isParent(commandListener)) {
-                        for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
-                            if (!commandMethod.getCommand().command().isEmpty()) {
-                                possibleSuggestions.add(commandMethod.getCommand().command());
-                            }
-                        }
-                    } else {
-                        for (CommandListener listener : getRegisteredCommands()) {
-                            if (isParent(listener)) {
-                                possibleSuggestions.add(listener.getClass().getAnnotation(Command.class).command());
-                            }
-                            for (CommandMethod commandMethod : getCommandMethods(listener)) {
-                                if (!commandMethod.getCommand().command().isEmpty()) {
-                                    possibleSuggestions.add(commandMethod.getCommand().command());
-                                }
-                            }
-                        }
+                for (CommandMethod commandMethod : getCommandMethods(listener)) {
+                    if (!commandMethod.getCommand().command().isEmpty()) {
+                        possibleSuggestions.add(commandMethod.getCommand().command());
                     }
-                    Suggestion suggestion = new Suggestion(cmd.command(), possibleSuggestions.toArray(new String[0]));
-                    commandEvent.respond(ResponseLevel.SEVERE, "{c1}Did you mean: " + ChatColor.ITALIC + StringUtil.combineArray(0, suggestion.getSuggestions(), ChatColor.RESET + "{c1}, " + ChatColor.ITALIC));
                 }
             }
-        } catch (Exception e) {
-            commandEvent.respond(ResponseLevel.SEVERE, getErrorMessage());
-            return true;
+            Suggestion suggestion = new Suggestion(event.command(), possibleSuggestions.toArray(new String[0]));
+            event.respond(ResponseLevel.SEVERE, "Did you mean: " + ChatColor.ITALIC + StringUtil.combineArray(0, suggestion.getSuggestions(), ChatColor.RESET + "{c1}, " + ChatColor.ITALIC));
         }
         return false;
     }
