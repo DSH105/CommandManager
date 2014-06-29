@@ -22,8 +22,6 @@ import com.dsh105.command.exceptions.CommandInvalidException;
 import com.dsh105.command.registration.CommandRegistry;
 import com.dsh105.command.registration.DynamicPluginCommand;
 import com.dsh105.commodus.StringUtil;
-import com.dsh105.commodus.paginator.Paginator;
-import com.dsh105.powermessage.core.PowerMessage;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -32,44 +30,46 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class CommandManager<T extends Plugin> implements ICommandManager<T> {
+public class CommandManager implements ICommandManager {
 
     private final static Logger LOGGER = Logger.getLogger("CommandManager");
 
-    private final static String INVALID_COMMAND_WARNING = "%s has registered an invalid command: %s -> %s. %s";
+    private final static String INVALID_COMMAND_WARNING = "%s has attempted to register an invalid command to %s of class %s -> %s. %s";
+    private final static String COMMAND_REQUIREMENTS = "%s has attempted to register an invalid command to %s of class %s -> %s. %s";
 
     private final CommandRegistry REGISTRY;
     private final ArrayList<CommandListener> COMMANDS = new ArrayList<>();
     private final HashMap<CommandListener, CommandMethod> SUB_COMMANDS = new HashMap<>();
+    private HelpService HELP_SERVICE;
 
     /*
      * Messages
      */
-    private String noPermissionMessage = "You are not permitted to do that.";
-    private String noAccessMessage = "You do not have access to this from here.";
-    private String errorMessage = "Something unexpected happened. Please see the console for any errors and report them immediately.";
-    private String commandNotFoundMessage = "That command does not exist.";
+    private String NO_PERMISSION = "You are not permitted to do that.";
+    private String NO_ACCESS = "You do not have access to this from here.";
+    private String ERROR = "Something unexpected happened. Please see the console for any errors and report them immediately.";
+    private String COMMAND_NOT_FOUND = "That command does not exist.";
 
-    private T owningPlugin;
-    private Paginator<PowerMessage> paginator = new Paginator<>();
+    private Plugin owningPlugin;
 
     private String responsePrefix;
     private boolean suggestCommands;
     private ChatColor highlightColour = ChatColor.WHITE;
     private ChatColor formatColour = ChatColor.WHITE;
 
-    public CommandManager(T owningPlugin) {
+    public CommandManager(Plugin owningPlugin) {
         this.owningPlugin = owningPlugin;
         REGISTRY = new CommandRegistry(owningPlugin);
+        HELP_SERVICE = new HelpService(this);
     }
 
-    public CommandManager(T owningPlugin, String responsePrefix) {
+    public CommandManager(Plugin owningPlugin, String responsePrefix) {
         this(owningPlugin);
         this.responsePrefix = responsePrefix;
     }
 
     @Override
-    public T getPlugin() {
+    public Plugin getPlugin() {
         return owningPlugin;
     }
 
@@ -95,8 +95,8 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
     }
 
     @Override
-    public Paginator<PowerMessage> getPaginator() {
-        return paginator;
+    public HelpService getHelpService() {
+        return HELP_SERVICE;
     }
 
     @Override
@@ -131,42 +131,42 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
 
     @Override
     public String getNoPermissionMessage() {
-        return noPermissionMessage;
+        return NO_PERMISSION;
     }
 
     @Override
-    public void setNoPermissionMessage(String noPermissionMessage) {
-        this.noPermissionMessage = noPermissionMessage;
+    public void setNoPermissionMessage(String NO_PERMISSION) {
+        this.NO_PERMISSION = NO_PERMISSION;
     }
 
     @Override
     public String getNoAccessMessage() {
-        return noAccessMessage;
+        return NO_ACCESS;
     }
 
     @Override
     public void setNoAccessMessage(String noAccessMessage) {
-        this.noAccessMessage = noAccessMessage;
+        this.NO_ACCESS = noAccessMessage;
     }
 
     @Override
     public String getErrorMessage() {
-        return errorMessage;
+        return ERROR;
     }
 
     @Override
     public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
+        this.ERROR = errorMessage;
     }
 
     @Override
     public String getCommandNotFoundMessage() {
-        return commandNotFoundMessage;
+        return COMMAND_NOT_FOUND;
     }
 
     @Override
     public void setCommandNotFoundMessage(String commandNotFoundMessage) {
-        this.commandNotFoundMessage = commandNotFoundMessage;
+        this.COMMAND_NOT_FOUND = commandNotFoundMessage;
     }
 
     @Override
@@ -187,7 +187,7 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
         }
         for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
             if (!isValid(commandMethod)) {
-                throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), "Command method can only have one parameter that MUST extend " + CommandEvent.class.getCanonicalName() + " and return a BOOLEAN."));
+            throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), COMMAND_REQUIREMENTS));
             }
             bukkitRegistration.add(commandMethod);
         }
@@ -198,6 +198,8 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
             Command command = commandMethod.getCommand();
             REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], command.aliases(), command.description(), command.usage(), this, owningPlugin));
         }
+
+        HELP_SERVICE.prepare();
     }
 
     @Override
@@ -224,19 +226,23 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
         Method method = new Reflection().reflect(parentClass).getSafeMethod(methodName).member();
         Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
-            throw new CommandInvalidException(owningPlugin.getName() + " has attempted to register an invalid command to " + registerTo.getClass().getCanonicalName() + ": " + parentClass.getCanonicalName() + " -> " + methodName + ". Method must have a @Command annotation");
+            throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, ". Method must have a @Command annotation"));
         }
 
         CommandMethod commandMethod = new CommandMethod(cmd, method);
         if (!isValid(commandMethod)) {
-            throw new CommandInvalidException(owningPlugin.getName() + " has attempted to register an invalid command to " + registerTo.getClass().getCanonicalName() + ": " + parentClass.getCanonicalName() + " -> " + methodName + ". Command method can only have one parameter that MUST extend " + CommandEvent.class.getCanonicalName() + " and return a BOOLEAN.");
+            throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
         }
         SUB_COMMANDS.put(registerTo, commandMethod);
+
+        HELP_SERVICE.prepare();
     }
 
     @Override
     public void unregister(CommandListener commandListener) {
         COMMANDS.remove(commandListener);
+
+        HELP_SERVICE.prepare();
     }
 
     @Override
@@ -470,7 +476,7 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
 
         if (willSuggestCommands()) {
             ArrayList<String> possibleSuggestions = new ArrayList<>();
-            for (CommandListener listener : getRegisteredCommands()) {
+            for (CommandListener listener : this) {
                 if (isParent(listener)) {
                     possibleSuggestions.add(listener.getClass().getAnnotation(Command.class).command());
                 }
@@ -484,5 +490,10 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
             event.respond(ResponseLevel.SEVERE, "Did you mean: " + ChatColor.ITALIC + StringUtil.combineArray(0, suggestion.getSuggestions(), ChatColor.RESET + "{c1}, " + ChatColor.ITALIC));
         }
         return false;
+    }
+
+    @Override
+    public ListIterator<CommandListener> iterator() {
+        return getRegisteredCommands().listIterator();
     }
 }

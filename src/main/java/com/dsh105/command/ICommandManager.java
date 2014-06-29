@@ -29,17 +29,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public interface ICommandManager<T extends Plugin> extends CommandExecutor {
+// TODO: JavaDocs
+public interface ICommandManager extends CommandExecutor, Iterable<CommandListener> {
 
-    T getPlugin();
+    Plugin getPlugin();
 
-    List<CommandListener> getRegisteredCommands();
+    public List<CommandListener> getRegisteredCommands();
 
     Map<CommandListener, CommandMethod> getRegisteredSubCommands();
 
     List<CommandMethod> getRegisteredSubCommands(CommandListener commandListener);
 
-    Paginator<PowerMessage> getPaginator();
+    HelpService getHelpService();
 
     String getResponsePrefix();
 
@@ -128,5 +129,5 @@ public interface ICommandManager<T extends Plugin> extends CommandExecutor {
     @Override
     boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String commandLabel, String[] args);
 
-    <T extends CommandSender> boolean onCommand(CommandEvent<T> commandEvent);
+    <T extends CommandSender> boolean onCommand(CommandEvent<T> event);
 }

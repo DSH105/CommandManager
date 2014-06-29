@@ -22,6 +22,7 @@ import com.dsh105.powermessage.markup.MarkupBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 public class CommandEvent<T extends CommandSender> {
 
@@ -43,6 +44,10 @@ public class CommandEvent<T extends CommandSender> {
         this.command = command;
         this.sender = sender;
         this.args = args;
+    }
+
+    public Plugin getPlugin() {
+        return getManager().getPlugin();
     }
 
     public ICommandManager getManager() {
