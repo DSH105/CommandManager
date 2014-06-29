@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
 
-public class CommandEnvironment {
+public class CommandEnvironmentTest {
 
     private static CommandManager mockedManager;
 
