@@ -377,7 +377,12 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
 
             Command cmd = method.getCommand();
 
-            for (String[] args : new String[][] {cmd.command().split("\\s"), cmd.aliases()}) {
+            ArrayList<String[]> aliases = new ArrayList<>();
+            for (String alias : cmd.aliases()) {
+                aliases.add(alias.split("\\s"));
+            }
+
+            for (String[] args : new String[][] {cmd.command().split("\\s"), aliases.toArray(StringUtil.EMPTY_STRING_ARRAY)}) {
                 // Multi-command arguments that MATCH are more important
                 if (args.length > 1) {
                     for (int i = 0; i <= event.argsLength() && i <= args.length; i++) {
@@ -475,7 +480,7 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
                     }
                 }
             }
-            Suggestion suggestion = new Suggestion(event.command(), possibleSuggestions.toArray(new String[0]));
+            Suggestion suggestion = new Suggestion(event.command(), possibleSuggestions.toArray(StringUtil.EMPTY_STRING_ARRAY));
             event.respond(ResponseLevel.SEVERE, "Did you mean: " + ChatColor.ITALIC + StringUtil.combineArray(0, suggestion.getSuggestions(), ChatColor.RESET + "{c1}, " + ChatColor.ITALIC));
         }
         return false;
