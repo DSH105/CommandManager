@@ -34,8 +34,9 @@ public class CommandManager implements ICommandManager {
 
     private final static Logger LOGGER = Logger.getLogger("CommandManager");
 
-    private final static String INVALID_COMMAND_WARNING = "%s has attempted to register an invalid command to %s of class %s -> %s. %s";
-    private final static String COMMAND_REQUIREMENTS = "%s has attempted to register an invalid command to %s of class %s -> %s. %s";
+    private final static String INVALID_SUB_COMMAND_WARNING = "%s has attempted to register an invalid command to %s (%s -> %s). %s";
+    private final static String INVALID_COMMAND_WARNING = "%s has attempted to register an invalid command (%s -> %s). %s";
+    private final static String COMMAND_REQUIREMENTS = "Command method can only have one parameter (" + CommandEvent.class.getCanonicalName() + ") and return a boolean.";
 
     private final CommandRegistry REGISTRY;
     private final ArrayList<CommandListener> COMMANDS = new ArrayList<>();
@@ -195,7 +196,7 @@ public class CommandManager implements ICommandManager {
         }
         for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
             if (!isValid(commandMethod)) {
-            throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), COMMAND_REQUIREMENTS));
+                throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), COMMAND_REQUIREMENTS));
             }
             bukkitRegistration.add(commandMethod);
         }
@@ -236,12 +237,12 @@ public class CommandManager implements ICommandManager {
         Method method = new Reflection().reflect(parentClass).getSafeMethod(methodName).member();
         Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
-            throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, ". Method must have a @Command annotation"));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, ". Method must have a @Command annotation"));
         }
 
         CommandMethod commandMethod = new CommandMethod(cmd, method);
         if (!isValid(commandMethod)) {
-            throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
         }
         SUB_COMMANDS.put(registerTo, commandMethod);
 
@@ -451,12 +452,7 @@ public class CommandManager implements ICommandManager {
     @Override
     public boolean isValid(CommandMethod commandMethod, Class<? extends CommandEvent> type) {
         Method accessor = commandMethod.getAccessor();
-        if (accessor.getReturnType().equals(Boolean.class)) {
-            if (accessor.getParameterTypes().length > 1) {
-                return type.isAssignableFrom(accessor.getParameterTypes()[0]) && (accessor.getParameterTypes().length == 1 || (accessor.getParameterTypes().length == 2 && Map.class.isAssignableFrom(accessor.getParameterTypes()[1])));
-            }
-        }
-        return false;
+        return accessor.getReturnType().equals(Boolean.class) && accessor.getParameterTypes().length == 1 && type.isAssignableFrom(accessor.getParameterTypes()[0]))
     }
 
     @Override
