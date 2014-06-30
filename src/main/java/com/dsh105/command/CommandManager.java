@@ -442,17 +442,19 @@ public class CommandManager implements ICommandManager {
             argsSearch: for (String[] args : commands) {
                 // Multi-command arguments that MATCH are more important
                 if (args.length > 1) {
-                    for (int i = 0; i < event.argsLength() && i < args.length; i++) {
-                        if (!matches(event.arg(i), args[i], false)) {
-                            continue argsSearch;
-                        }
-                    }
-
                     // Test for any regex values and check if they meet the requirements
                     if (variableMatcher.testRegexVariables()) {
                         // We found a match, yay
                         return method;
                     }
+
+                    for (int i = 0; i < event.argsLength() && i < args.length; i++) {
+                        if (!matches(event.arg(i), args[i], false)) {
+                            continue argsSearch;
+                        }
+                    }
+                    
+                    return method;
                 } else {
                     if (matches(event.command(), args[0], false)) {
                         return method;
