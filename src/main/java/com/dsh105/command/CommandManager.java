@@ -201,10 +201,12 @@ public class CommandManager implements ICommandManager {
         }
         COMMANDS.add(commandListener);
 
-        // Register all commands to Bukkit
-        for (CommandMethod commandMethod : bukkitRegistration) {
-            Command command = commandMethod.getCommand();
-            REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], command.aliases(), command.description(), command.usage(), this, owningPlugin));
+        if (REGISTRY != null) {
+            // Register all commands to Bukkit
+            for (CommandMethod commandMethod : bukkitRegistration) {
+                Command command = commandMethod.getCommand();
+                REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], command.aliases(), command.description(), command.usage(), this, owningPlugin));
+            }
         }
 
         HELP_SERVICE.prepare();
@@ -248,6 +250,7 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public void unregister(CommandListener commandListener) {
+        // TODO: Unregister from Bukkit
         COMMANDS.remove(commandListener);
 
         HELP_SERVICE.prepare();
