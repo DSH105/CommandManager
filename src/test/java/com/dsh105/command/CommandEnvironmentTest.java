@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 
 public class CommandEnvironmentTest {
 
-    private static CommandManager COMMAND_MANAGER = new CommandManager(getMockedPlugin(), mock(CommandRegistry.class), "CommandTest");
+    private static CommandManager COMMAND_MANAGER = new CommandManager(getMockedPlugin(), null, "CommandTest");
     private static Plugin MOCKED_PLUGIN;
 
     public static Plugin getMockedPlugin() {
