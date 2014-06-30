@@ -50,7 +50,7 @@ public class CommandEnvironmentTest {
             COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(CommandSender.class)));
 
             System.out.println("Testing command as Player: \"" + command + "\"");
-            COMMAND_MANAGER.onCommand(new CommandEvent<>(COMMAND_MANAGER, command, mock(Player.class)));
+            COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(Player.class)));
         }
     }
 }
