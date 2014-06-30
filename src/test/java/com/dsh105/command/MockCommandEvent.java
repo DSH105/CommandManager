@@ -20,17 +20,17 @@ package com.dsh105.command;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
-public class MockCommandEvent extends CommandEvent {
+public class MockCommandEvent<T extends CommandSender> extends CommandEvent<T> {
 
-    public MockCommandEvent(CommandManager manager, String args, CommandSender sender) {
+    public MockCommandEvent(CommandManager manager, String args, T sender) {
         super(manager, args, sender);
     }
 
-    public MockCommandEvent(CommandManager manager, CommandSender sender, String... args) {
+    public MockCommandEvent(CommandManager manager, T sender, String... args) {
         super(manager, sender, args);
     }
 
-    public MockCommandEvent(CommandManager manager, String command, CommandSender sender, String... args) {
+    public MockCommandEvent(CommandManager manager, String command, T sender, String... args) {
         super(manager, command, sender, args);
     }
 

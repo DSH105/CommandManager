@@ -47,10 +47,10 @@ public class CommandEnvironmentTest {
 
         for (String command : new String[]{"parent", "variable wow", "v wow", "variable"}) {
             System.out.println("Testing command: \"" + command + "\"");
-            COMMAND_MANAGER.onCommand(new MockCommandEvent(COMMAND_MANAGER, command, mock(CommandSender.class)));
+            COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(CommandSender.class)));
 
             System.out.println("Testing command as Player: \"" + command + "\"");
-            COMMAND_MANAGER.onCommand(new MockCommandEvent(COMMAND_MANAGER, command, mock(Player.class)));
+            COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(Player.class)));
         }
     }
 }

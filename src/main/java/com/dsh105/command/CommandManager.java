@@ -453,7 +453,7 @@ public class CommandManager implements ICommandManager {
                             continue argsSearch;
                         }
                     }
-                    
+
                     return method;
                 } else {
                     if (matches(event.command(), args[0], false)) {
