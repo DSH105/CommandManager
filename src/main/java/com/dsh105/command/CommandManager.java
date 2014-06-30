@@ -452,7 +452,7 @@ public class CommandManager implements ICommandManager {
     @Override
     public boolean isValid(CommandMethod commandMethod, Class<? extends CommandEvent> type) {
         Method accessor = commandMethod.getAccessor();
-        return accessor.getReturnType().equals(Boolean.class) && accessor.getParameterTypes().length == 1 && type.isAssignableFrom(accessor.getParameterTypes()[0]))
+        return accessor.getReturnType().equals(Boolean.class) && accessor.getParameterTypes().length == 1 && type.isAssignableFrom(accessor.getParameterTypes()[0]);
     }
 
     @Override
