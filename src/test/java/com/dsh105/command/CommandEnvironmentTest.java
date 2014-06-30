@@ -18,28 +18,32 @@
 package com.dsh105.command;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class CommandEnvironmentTest {
 
-    private static CommandManager mockedManager;
+    private static CommandManager COMMAND_MANAGER = new CommandManager(getMockedPlugin(), "CommandTest");
+    private static Plugin MOCKED_PLUGIN;
 
-    public static CommandManager getMockedManager() {
-        if (mockedManager == null) {
-            mockedManager = mock(CommandManager.class);
+    public static Plugin getMockedPlugin() {
+        if (MOCKED_PLUGIN == null) {
+            MOCKED_PLUGIN = mock(Plugin.class);
+            when(MOCKED_PLUGIN.getName()).thenReturn("CommandTest");
         }
-        return mockedManager;
+        return MOCKED_PLUGIN;
     }
 
     @Test
     public void testCommands() {
-        getMockedManager().register(new CommandTest());
+        COMMAND_MANAGER.register(new CommandTest());
 
         for (String command : new String[]{"parent", "variable wow", "v wow", "variable"}) {
             System.out.println("Testing command: \"/" + command + "\"");
-            System.out.println("Result: " + getMockedManager().onCommand(new MockCommandEvent(getMockedManager(), command, mock(CommandSender.class))));
+            System.out.println("Result: " + COMMAND_MANAGER.onCommand(new MockCommandEvent(COMMAND_MANAGER, command, mock(CommandSender.class))));
         }
     }
 }
