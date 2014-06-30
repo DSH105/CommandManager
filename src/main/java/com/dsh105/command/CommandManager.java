@@ -26,6 +26,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Logger;
@@ -59,7 +60,7 @@ public class CommandManager implements ICommandManager {
     private ChatColor formatColour = ChatColor.WHITE;
 
     public CommandManager(Plugin owningPlugin) {
-        this(owningPlugin, null);
+        this(owningPlugin, "");
     }
 
     public CommandManager(Plugin owningPlugin, String responsePrefix) {
@@ -83,6 +84,17 @@ public class CommandManager implements ICommandManager {
     @Override
     public List<CommandListener> getRegisteredCommands() {
         return Collections.unmodifiableList(COMMANDS);
+    }
+
+    @Override
+    public List<String> getRegisteredCommandNames() {
+        ArrayList<String> commands = new ArrayList<>();
+        for (CommandListener listener : getRegisteredCommands()) {
+            for (CommandMethod method : getCommandMethods(listener)) {
+                commands.add(method.getCommand().command());
+            }
+        }
+        return Collections.unmodifiableList(commands);
     }
 
     @Override
@@ -500,6 +512,7 @@ public class CommandManager implements ICommandManager {
         for (CommandListener commandListener : getCommandsFor(event.command())) {
             CommandMethod commandMethod = getCommandMethod(commandListener, event);
             if (commandMethod != null) {
+
                 Command command = commandMethod.getCommand();
 
                 // Pair up a final matcher that the listener can use
@@ -510,6 +523,8 @@ public class CommandManager implements ICommandManager {
                         if (!(boolean) commandMethod.getAccessor().invoke(event)) {
                             event.respond(command.usage());
                         }
+                    } catch (IllegalAccessException | InvocationTargetException ignored) {
+                        // Most likely the target type isn't valid
                     } catch (Exception e) {
                         event.respond(ResponseLevel.SEVERE, getErrorMessage());
                         e.printStackTrace();

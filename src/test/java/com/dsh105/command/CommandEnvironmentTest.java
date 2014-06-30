@@ -17,8 +17,9 @@
 
 package com.dsh105.command;
 
-import com.dsh105.command.registration.CommandRegistry;
+import com.dsh105.commodus.StringUtil;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.junit.Test;
 
@@ -42,9 +43,14 @@ public class CommandEnvironmentTest {
     public void testCommands() {
         COMMAND_MANAGER.register(new CommandTest());
 
+        System.out.println("Registered commands: " + StringUtil.combineArray(0, ", ", COMMAND_MANAGER.getRegisteredCommandNames().toArray(StringUtil.EMPTY_STRING_ARRAY)));
+
         for (String command : new String[]{"parent", "variable wow", "v wow", "variable"}) {
-            System.out.println("Testing command: \"/" + command + "\"");
-            System.out.println("Result: " + COMMAND_MANAGER.onCommand(new MockCommandEvent(COMMAND_MANAGER, command, mock(CommandSender.class))));
+            System.out.println("Testing command: \"" + command + "\"");
+            COMMAND_MANAGER.onCommand(new MockCommandEvent(COMMAND_MANAGER, command, mock(CommandSender.class)));
+
+            System.out.println("Testing command as Player: \"" + command + "\"");
+            COMMAND_MANAGER.onCommand(new MockCommandEvent(COMMAND_MANAGER, command, mock(Player.class)));
         }
     }
 }

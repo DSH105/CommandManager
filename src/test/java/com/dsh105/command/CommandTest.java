@@ -17,6 +17,7 @@
 
 package com.dsh105.command;
 
+import org.bukkit.entity.Player;
 import org.junit.Assert;
 
 @Command(
@@ -46,7 +47,7 @@ public class CommandTest implements CommandListener {
             command = "variable",
             description = "Test command"
     )
-    public boolean testCommand(CommandEvent event) {
+    public boolean testCommand(CommandEvent<Player> event) {
         event.respond("Command fired: \"" + event.input() + "\"");
         return true;
     }
