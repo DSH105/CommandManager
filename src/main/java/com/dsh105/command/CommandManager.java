@@ -433,12 +433,13 @@ public class CommandManager implements ICommandManager {
             Command cmd = method.getCommand();
             VariableMatcher variableMatcher = new VariableMatcher(cmd, event);
 
-            ArrayList<String[]> aliases = new ArrayList<>();
+            ArrayList<String[]> commands = new ArrayList<>();
+            commands.add(cmd.command().split("\\s"));
             for (String alias : cmd.aliases()) {
-                aliases.add(alias.split("\\s"));
+                commands.add(alias.split("\\s"));
             }
 
-            argsSearch: for (String[] args : new String[][] {cmd.command().split("\\s"), aliases.toArray(StringUtil.EMPTY_STRING_ARRAY)}) {
+            argsSearch: for (String[] args : commands) {
                 // Multi-command arguments that MATCH are more important
                 if (args.length > 1) {
                     for (int i = 0; i < event.argsLength() && i < args.length; i++) {
