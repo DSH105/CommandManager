@@ -196,7 +196,22 @@ public class CommandManager implements ICommandManager {
         }
         for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
             if (!isValid(commandMethod)) {
-                throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), COMMAND_REQUIREMENTS));
+                StringBuilder commandRequirements = new StringBuilder();
+                if (!commandMethod.getAccessor().getReturnType().equals(Boolean.class)) {
+                    commandRequirements.append("Command method must return a BOOLEAN");
+                }
+                if (!(commandMethod.getAccessor().getParameterTypes().length == 1 && CommandEvent.class.isAssignableFrom(commandMethod.getAccessor().getParameterTypes()[0]))) {
+                    if (commandRequirements.length() == 0) {
+                        commandRequirements.append("Command method ");
+                    } else {
+                        commandRequirements.append(" and");
+                    }
+                    commandRequirements.append(" can only have one parameter");
+                    commandRequirements.append("(");
+                    commandRequirements.append(CommandEvent.class.getCanonicalName());
+                    commandRequirements.append(")");
+                }
+                throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), commandRequirements.toString()));
             }
             bukkitRegistration.add(commandMethod);
         }
@@ -457,7 +472,7 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public boolean isParent(CommandListener commandListener) {
-        return commandListener.getClass().getAnnotation(Command.class) != null;
+        return commandListener.getClass().isAnnotationPresent(Command.class);
     }
 
     @Override
