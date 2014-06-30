@@ -426,7 +426,7 @@ public class CommandManager implements ICommandManager {
     @Override
     public CommandMethod getCommandMethod(CommandListener commandListener, CommandEvent event) {
         for (CommandMethod method : getCommandMethods(commandListener)) {
-            if (!isValid(method, event)) {
+            if (!isValid(method)) {
                 continue;
             }
 
@@ -438,23 +438,19 @@ public class CommandManager implements ICommandManager {
                 aliases.add(alias.split("\\s"));
             }
 
-            for (String[] args : new String[][] {cmd.command().split("\\s"), aliases.toArray(StringUtil.EMPTY_STRING_ARRAY)}) {
+            argsSearch: for (String[] args : new String[][] {cmd.command().split("\\s"), aliases.toArray(StringUtil.EMPTY_STRING_ARRAY)}) {
                 // Multi-command arguments that MATCH are more important
                 if (args.length > 1) {
-                    for (int i = 0; i <= event.argsLength() && i <= args.length; i++) {
-
-                        // Check if the iteration is at its end
-                        if (i == event.argsLength() || i == args.length) {
-
-                            // Test for any regex values and check if they meet the requirements
-                            if (variableMatcher.testRegexVariables()) {
-                                // We found a match, yay
-                                return method;
-                            }
-                        }
+                    for (int i = 0; i < event.argsLength() && i < args.length; i++) {
                         if (!matches(event.arg(i), args[i], false)) {
-                            break;
+                            continue argsSearch;
                         }
+                    }
+
+                    // Test for any regex values and check if they meet the requirements
+                    if (variableMatcher.testRegexVariables()) {
+                        // We found a match, yay
+                        return method;
                     }
                 } else {
                     if (matches(event.command(), args[0], false)) {
