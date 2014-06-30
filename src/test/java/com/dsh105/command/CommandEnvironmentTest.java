@@ -17,6 +17,7 @@
 
 package com.dsh105.command;
 
+import com.dsh105.command.registration.CommandRegistry;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.junit.Test;
@@ -26,7 +27,7 @@ import static org.mockito.Mockito.when;
 
 public class CommandEnvironmentTest {
 
-    private static CommandManager COMMAND_MANAGER = new CommandManager(getMockedPlugin(), "CommandTest");
+    private static CommandManager COMMAND_MANAGER = new CommandManager(getMockedPlugin(), mock(CommandRegistry.class), "CommandTest");
     private static Plugin MOCKED_PLUGIN;
 
     public static Plugin getMockedPlugin() {

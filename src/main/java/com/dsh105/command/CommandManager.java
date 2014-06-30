@@ -58,14 +58,22 @@ public class CommandManager implements ICommandManager {
     private ChatColor formatColour = ChatColor.WHITE;
 
     public CommandManager(Plugin owningPlugin) {
-        this.owningPlugin = owningPlugin;
-        REGISTRY = new CommandRegistry(owningPlugin);
-        HELP_SERVICE = new HelpService(this);
+        this(owningPlugin, new CommandRegistry(owningPlugin));
     }
 
     public CommandManager(Plugin owningPlugin, String responsePrefix) {
-        this(owningPlugin);
+        this(owningPlugin, new CommandRegistry(owningPlugin), responsePrefix);
+    }
+
+    public CommandManager(Plugin owningPlugin, CommandRegistry registry) {
+        this(owningPlugin, registry, null);
+    }
+
+    public CommandManager(Plugin owningPlugin, CommandRegistry registry, String responsePrefix) {
+        this.owningPlugin = owningPlugin;
         this.responsePrefix = responsePrefix;
+        REGISTRY = registry;
+        HELP_SERVICE = new HelpService(this);
     }
 
     @Override
