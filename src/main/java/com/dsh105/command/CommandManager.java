@@ -75,10 +75,6 @@ public class CommandManager implements ICommandManager {
         }
     }
 
-    private void enableHelpService() {
-        HELP_SERVICE = new HelpService(this);
-    }
-
     @Override
     public Plugin getPlugin() {
         return owningPlugin;
@@ -108,6 +104,17 @@ public class CommandManager implements ICommandManager {
     @Override
     public HelpService getHelpService() {
         return HELP_SERVICE;
+    }
+
+    private void enableHelpService() {
+        HELP_SERVICE = new HelpService(this);
+    }
+
+    @Override
+    public void refreshHelpService() {
+        if (HELP_SERVICE != null) {
+            HELP_SERVICE.prepare();
+        }
     }
 
     @Override
@@ -227,7 +234,7 @@ public class CommandManager implements ICommandManager {
             }
         }
 
-        HELP_SERVICE.prepare();
+        refreshHelpService();
     }
 
     @Override
@@ -263,7 +270,7 @@ public class CommandManager implements ICommandManager {
         }
         SUB_COMMANDS.put(registerTo, commandMethod);
 
-        HELP_SERVICE.prepare();
+        refreshHelpService();
     }
 
     @Override
@@ -271,7 +278,7 @@ public class CommandManager implements ICommandManager {
         // TODO: Unregister from Bukkit
         COMMANDS.remove(commandListener);
 
-        HELP_SERVICE.prepare();
+        refreshHelpService();
     }
 
     @Override

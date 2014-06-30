@@ -42,6 +42,8 @@ public interface ICommandManager extends CommandExecutor, Iterable<CommandListen
 
     HelpService getHelpService();
 
+    void refreshHelpService();
+
     String getResponsePrefix();
 
     void setResponsePrefix(String responsePrefix);
