@@ -197,7 +197,7 @@ public class CommandManager implements ICommandManager {
         for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
             if (!isValid(commandMethod)) {
                 StringBuilder commandRequirements = new StringBuilder();
-                if (!commandMethod.getAccessor().getReturnType().equals(Boolean.class)) {
+                if (!commandMethod.getAccessor().getReturnType().equals(boolean.class)) {
                     commandRequirements.append("Command method must return a BOOLEAN");
                 }
                 if (!(commandMethod.getAccessor().getParameterTypes().length == 1 && CommandEvent.class.isAssignableFrom(commandMethod.getAccessor().getParameterTypes()[0]))) {
@@ -385,6 +385,7 @@ public class CommandManager implements ICommandManager {
             Command cmd = method.getAnnotation(Command.class);
             if (cmd != null) {
                 methods.add(new CommandMethod(cmd, method));
+                continue;
             }
 
             ParentCommand parentCommand = method.getAnnotation(ParentCommand.class);
@@ -467,7 +468,7 @@ public class CommandManager implements ICommandManager {
     @Override
     public boolean isValid(CommandMethod commandMethod, Class<? extends CommandEvent> type) {
         Method accessor = commandMethod.getAccessor();
-        return accessor.getReturnType().equals(Boolean.class) && accessor.getParameterTypes().length == 1 && type.isAssignableFrom(accessor.getParameterTypes()[0]);
+        return accessor.getReturnType().equals(boolean.class) && accessor.getParameterTypes().length == 1 && type.isAssignableFrom(accessor.getParameterTypes()[0]);
     }
 
     @Override
