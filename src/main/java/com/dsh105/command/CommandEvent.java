@@ -38,7 +38,7 @@ public class CommandEvent<T extends CommandSender> {
     private VariableMatcher variableMatcher;
 
     public CommandEvent(CommandManager manager, String args, T sender) {
-        this(manager, sender, args.replaceAll("\\s+", "").split("\\s"));
+        this(manager, sender, args.replaceAll("\\s+", " ").split("\\s"));
     }
 
     public CommandEvent(CommandManager manager, T sender, String... args) {
@@ -54,7 +54,7 @@ public class CommandEvent<T extends CommandSender> {
         ArrayList<String> argsList = new ArrayList<>();
         argsList.add(command);
         argsList.addAll(Arrays.asList(args));
-        input = StringUtil.combineArray(" ", argsList.toArray(StringUtil.EMPTY_STRING_ARRAY));
+        this.input = StringUtil.combine(" ", argsList);
     }
 
     public Plugin getPlugin() {

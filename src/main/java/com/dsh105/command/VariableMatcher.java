@@ -17,6 +17,8 @@
 
 package com.dsh105.command;
 
+import com.dsh105.commodus.StringUtil;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,18 +26,20 @@ import java.util.regex.Pattern;
 public class VariableMatcher {
 
     private static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
-    private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(<|\\[)(r:.+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
-    private static final char VARIABLE_BOUNDARY = '\'';
+    private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(r:([^>\\]]+))(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private Command command;
     private CommandEvent event;
 
+    private String syntaxPattern;
+    List<String> arguments;
     private HashMap<String, Integer> variables;
     private HashMap<String, String> matchedArguments;
 
     public VariableMatcher(Command command, CommandEvent event) {
         this.command = command;
         this.event = event;
+        this.arguments = Arrays.asList(command.command().split("\\s"));
     }
 
     public Command getCommand() {
@@ -50,26 +54,26 @@ public class VariableMatcher {
         if (variables == null) {
             variables = new HashMap<>();
         }
-        List<String> arguments = Arrays.asList(command.command().split("\\s"));
         String syntaxPattern = command.command();
 
-        Matcher argMatcher = SYNTAX_PATTERN.matcher(command.command());
+        Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command.command());
 
-        while (argMatcher.find()) {
-            if (argMatcher.group(1).equals("[")) {
-                // Optional args can match something or nothing
-                syntaxPattern = syntaxPattern.replace(argMatcher.group(0), "(?:(" + VARIABLE_BOUNDARY + "[^" + VARIABLE_BOUNDARY + "]+" + VARIABLE_BOUNDARY + "|[^\\s]+))?");
-            } else {
-                syntaxPattern = syntaxPattern.replace(argMatcher.group(1), "(" + VARIABLE_BOUNDARY + "[^" + VARIABLE_BOUNDARY + "]+" + VARIABLE_BOUNDARY + ")");
-            }
-
-            String variable = argMatcher.group(2);
-            variables.put(variable, arguments.indexOf(variable));
+        while (syntaxMatcher.find()) {
+            // Optional args can match something or nothing - make sure to account for that
+            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), "([^\\s]+)" + (syntaxMatcher.group(1).equals("[") ? "?" : ""));
+            variables.put(syntaxMatcher.group(2), arguments.indexOf(syntaxMatcher.group(0)));
         }
 
+        this.syntaxPattern = syntaxPattern;
         return syntaxPattern;
     }
 
+    public boolean matches() {
+        if (syntaxPattern == null) {
+            buildVariableSyntax();
+        }
+        return Pattern.compile(syntaxPattern).matcher(event.input()).matches();
+    }
 
     public HashMap<String, Integer> getVariables() {
         if (variables == null) {
@@ -85,20 +89,19 @@ public class VariableMatcher {
             HashMap<String, Integer> variables = getVariables();
 
             for (Map.Entry<String, Integer> entry : variables.entrySet()) {
-                matchedArguments.put(entry.getKey(), event.arg(entry.getValue()));
+                matchedArguments.put(entry.getKey(), event.input().split("\\s")[entry.getValue()]);
             }
         }
         return matchedArguments;
     }
 
     public boolean testRegexVariables() {
-        Matcher matcher = REGEX_SYNTAX_PATTERN.matcher(event.input());
+        Matcher matcher = REGEX_SYNTAX_PATTERN.matcher(command.command());
         while (matcher.find()) {
-            String variableRegex = matcher.group(matcher.group(3) != null ? 3 : 6);
-            if (!Pattern.compile(variableRegex).matcher(getMatchedArguments().get(variableRegex)).matches()) {
-                return false;
+            if (Pattern.compile(matcher.group(2)).matcher(getMatchedArguments().get(matcher.group(1))).matches()) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }

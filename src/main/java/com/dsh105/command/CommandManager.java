@@ -433,8 +433,8 @@ public class CommandManager implements ICommandManager {
             Command cmd = method.getCommand();
             VariableMatcher variableMatcher = new VariableMatcher(cmd, event);
 
-            // Test for any regex values and check if they meet the requirements
-            if (variableMatcher.testRegexVariables()) {
+            // Test for any variables/regex and check if they meet the requirements
+            if (variableMatcher.matches() || variableMatcher.testRegexVariables()) {
                 // We found a match, yay
                 return method;
             }

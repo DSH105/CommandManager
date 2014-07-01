@@ -24,22 +24,26 @@ import org.junit.Assert;
         command = "parent",
         description = "Test parent command"
 )
-public class CommandTest implements CommandListener {
+public class MockCommandListener implements CommandListener {
 
     @ParentCommand
     public boolean parentCommand(CommandEvent event) {
-        event.respond("Command fired: \"" + event.input() + "\"");
+        event.respond("Parent command successfully fired.");
         return true;
     }
 
     @Command(
-            command = "variable <var>",
+            command = "something <var>",
             description = "Test variables",
             aliases = "v <var>"
     )
     public boolean variableCommand(CommandEvent event) {
-        event.respond("Command fired: \"" + event.input() + "\"");
-        Assert.assertEquals(event.variable("var"), "wow");
+        try {
+            event.respond("Variable test executed for: " + event.variable("var"));
+            Assert.assertEquals(event.variable("var"), "wow");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return true;
     }
 
@@ -49,7 +53,7 @@ public class CommandTest implements CommandListener {
             aliases = "v"
     )
     public boolean testCommand(CommandEvent<Player> event) {
-        event.respond("Command fired: \"" + event.input() + "\"");
+        event.respond("\"" + event.input() + "\" command fired.");
         return true;
     }
 }
