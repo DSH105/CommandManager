@@ -521,7 +521,7 @@ public class CommandManager implements ICommandManager {
 
                 if (command.permission().isEmpty() || event.canPerform(command.permission())) {
                     try {
-                        if (!(boolean) commandMethod.getAccessor().invoke(event)) {
+                        if (!(boolean) commandMethod.getAccessor().invoke(commandListener, event)) {
                             event.respond(command.usage());
                         }
                     } catch (IllegalAccessException | InvocationTargetException ignored) {
