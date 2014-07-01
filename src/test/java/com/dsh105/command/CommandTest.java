@@ -45,7 +45,8 @@ public class CommandTest implements CommandListener {
 
     @Command(
             command = "variable",
-            description = "Test command"
+            description = "Test command",
+            aliases = "v"
     )
     public boolean testCommand(CommandEvent<Player> event) {
         event.respond("Command fired: \"" + event.input() + "\"");

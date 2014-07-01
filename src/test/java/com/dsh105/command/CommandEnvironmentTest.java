@@ -21,8 +21,12 @@ import com.dsh105.commodus.StringUtil;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +54,25 @@ public class CommandEnvironmentTest {
             COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(CommandSender.class)));
 
             System.out.println("Testing command as Player: \"" + command + "\"");
-            COMMAND_MANAGER.onCommand(new CommandEvent<>(COMMAND_MANAGER, command, mock(Player.class)));
+            COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(Player.class)));
         }
+    }
+
+    @Test
+    public void testVariableMatcher() {
+        Command mockedCommand = mock(Command.class);
+        when(mockedCommand.command()).thenReturn("wow <such> doge <much> [command]");
+
+        CommandEvent mockedEvent = mock(CommandEvent.class);
+        when(mockedEvent.input()).thenReturn(mockedCommand.command());
+        when(mockedEvent.arg(anyInt())).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                return ((CommandEvent) invocation.getMock()).command().split("\\s")[(Integer) invocation.getArguments()[0]];
+            }
+        });
+
+        VariableMatcher variableMatcher = new VariableMatcher(mockedCommand, mockedEvent);
+        System.out.println(variableMatcher.buildVariableSyntax());
     }
 }

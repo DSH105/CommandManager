@@ -54,7 +54,7 @@ public class CommandEvent<T extends CommandSender> {
         ArrayList<String> argsList = new ArrayList<>();
         argsList.add(command);
         argsList.addAll(Arrays.asList(args));
-        input = StringUtil.join(argsList, " ");
+        input = StringUtil.combineArray(" ", argsList.toArray(StringUtil.EMPTY_STRING_ARRAY));
     }
 
     public Plugin getPlugin() {

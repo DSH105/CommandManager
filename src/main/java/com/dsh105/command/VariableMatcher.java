@@ -23,11 +23,13 @@ import java.util.regex.Pattern;
 
 public class VariableMatcher {
 
-    private static final Pattern SYNTAX_PATTERN = Pattern.compile("(<(.+)>)|(\\[(.+)\\])", Pattern.CASE_INSENSITIVE);
-    private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(<(regex:(.+))>)|(\\[(regex:(.+))\\])", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(<|\\[)(r:.+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    private static final char VARIABLE_BOUNDARY = '\'';
 
     private Command command;
     private CommandEvent event;
+
     private HashMap<String, Integer> variables;
     private HashMap<String, String> matchedArguments;
 
@@ -44,17 +46,34 @@ public class VariableMatcher {
         return event;
     }
 
-    public HashMap<String, Integer> getVariables() {
+    protected String buildVariableSyntax() {
         if (variables == null) {
             variables = new HashMap<>();
+        }
+        List<String> arguments = Arrays.asList(command.command().split("\\s"));
+        String syntaxPattern = command.command();
 
-            List<String> arguments = Arrays.asList(command.command().split("\\s"));
+        Matcher argMatcher = SYNTAX_PATTERN.matcher(command.command());
 
-            Matcher matcher = SYNTAX_PATTERN.matcher(command.command());
-            while (matcher.find()) {
-                String variable = matcher.group(matcher.group(2) != null ? 2 : 4);
-                this.variables.put(variable, arguments.indexOf(variable));
+        while (argMatcher.find()) {
+            if (argMatcher.group(1).equals("[")) {
+                // Optional args can match something or nothing
+                syntaxPattern = syntaxPattern.replace(argMatcher.group(0), "(?:(" + VARIABLE_BOUNDARY + "[^" + VARIABLE_BOUNDARY + "]+" + VARIABLE_BOUNDARY + "|[^\\s]+))?");
+            } else {
+                syntaxPattern = syntaxPattern.replace(argMatcher.group(1), "(" + VARIABLE_BOUNDARY + "[^" + VARIABLE_BOUNDARY + "]+" + VARIABLE_BOUNDARY + ")");
             }
+
+            String variable = argMatcher.group(2);
+            variables.put(variable, arguments.indexOf(variable));
+        }
+
+        return syntaxPattern;
+    }
+
+
+    public HashMap<String, Integer> getVariables() {
+        if (variables == null) {
+            buildVariableSyntax();
         }
         return variables;
     }

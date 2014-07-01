@@ -433,6 +433,12 @@ public class CommandManager implements ICommandManager {
             Command cmd = method.getCommand();
             VariableMatcher variableMatcher = new VariableMatcher(cmd, event);
 
+            // Test for any regex values and check if they meet the requirements
+            if (variableMatcher.testRegexVariables()) {
+                // We found a match, yay
+                return method;
+            }
+
             ArrayList<String[]> commands = new ArrayList<>();
             commands.add(cmd.command().split("\\s"));
             for (String alias : cmd.aliases()) {
@@ -442,23 +448,19 @@ public class CommandManager implements ICommandManager {
             argsSearch: for (String[] args : commands) {
                 // Multi-command arguments that MATCH are more important
                 if (args.length > 1) {
-                    // Test for any regex values and check if they meet the requirements
-                    if (variableMatcher.testRegexVariables()) {
-                        // We found a match, yay
-                        return method;
-                    }
-
                     for (int i = 0; i < event.argsLength() && i < args.length; i++) {
                         if (!matches(event.arg(i), args[i], false)) {
                             continue argsSearch;
                         }
                     }
-
                     return method;
-                } else {
-                    if (matches(event.command(), args[0], false)) {
-                        return method;
-                    }
+                }
+            }
+
+            // Match up any single-argument commands if a multi-argument match was not found abov
+            for (String[] args : commands) {
+                if (matches(event.command(), args[0], false)) {
+                    return method;
                 }
             }
         }
