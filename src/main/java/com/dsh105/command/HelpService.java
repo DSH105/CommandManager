@@ -55,8 +55,12 @@ public class HelpService {
     }
 
     private void prepare(CommandMethod commandMethod) {
-        String helpTooltip = new MarkupBuilder().withText(commandMethod.getCommand().description()).build().getContent();
-        paginator.add(new MarkupBuilder().withText(commandMethod.getCommand().description()).build().tooltip(helpTooltip));
+        PowerMessage part = new MarkupBuilder().withText(commandMethod.getCommand().description()).build();
+        String helpTooltip = new MarkupBuilder().withText(commandMethod.getCommand().help()).build().getContent();
+        if (!commandMethod.getCommand().help().isEmpty()) {
+            part.tooltip(helpTooltip);
+        }
+        paginator.add(part);
     }
 
     public ICommandManager getManager() {
