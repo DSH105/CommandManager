@@ -313,7 +313,7 @@ public class CommandManager implements ICommandManager {
             }
 
             @Override
-            public String help() {
+            public String[] help() {
                 return cmd.help();
             }
 
