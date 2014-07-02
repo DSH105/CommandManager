@@ -26,6 +26,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -242,7 +243,11 @@ public class CommandManager implements ICommandManager {
             // Register all commands to Bukkit
             for (CommandMethod commandMethod : bukkitRegistration) {
                 Command command = commandMethod.getCommand();
-                REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], command.aliases(), command.description(), command.usage(), this, owningPlugin));
+                List<String> aliases = new ArrayList<>();
+                for (String alias : command.aliases()) {
+                    aliases.add(alias.split("\\s")[0]);
+                }
+                REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], aliases.toArray(StringUtil.EMPTY_STRING_ARRAY), command.description(), command.usage(), this, owningPlugin));
             }
         }
 
@@ -270,17 +275,60 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public void registerSubCommand(CommandListener registerTo, Class<? extends CommandListener> parentClass, String methodName) {
+        if (!isParent(registerTo)) {
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, ". Class must have a @Command annotation."));
+        }
+        final Command parent = registerTo.getClass().getAnnotation(Command.class);
         Method method = new Reflection().reflect(parentClass).getSafeMethod(methodName).member();
-        Command cmd = method.getAnnotation(Command.class);
+        final Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
             throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, ". Method must have a @Command annotation"));
         }
 
-        CommandMethod commandMethod = new CommandMethod(cmd, method);
+        CommandMethod commandMethod = new CommandMethod(new Command() {
+            @Override
+            public String description() {
+                return cmd.description();
+            }
+
+            @Override
+            public String command() {
+                // Combine the two - Sub command :D
+                return parent.command() + " " + cmd.command();
+            }
+
+            @Override
+            public String permission() {
+                return cmd.permission();
+            }
+
+            @Override
+            public String[] aliases() {
+                // Keep aliases for sub commands the same
+                return cmd.aliases();
+            }
+
+            @Override
+            public String help() {
+                return cmd.help();
+            }
+
+            @Override
+            public String usage() {
+                return cmd.usage();
+            }
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return cmd.annotationType();
+            }
+        }, method);
         if (!isValid(commandMethod)) {
             throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
         }
         SUB_COMMANDS.put(registerTo, commandMethod);
+
+        // No need to register to Bukkit because it's a sub command
 
         refreshHelpService();
     }
@@ -339,13 +387,15 @@ public class CommandManager implements ICommandManager {
         ArrayList<T> fuzzyMatches = new ArrayList<>();
         for (T commandListener : commandList) {
             Command parent = commandListener.getClass().getAnnotation(Command.class);
+            if (parent != null) {
+                if (matches(parent.command().split("\\s")[0], command, false)) {
+                    matches.add(commandListener);
+                    continue;
+                }
+            }
+
             for (CommandMethod method : getCommandMethods(commandListener)) {
                 Command cmd = method.getCommand();
-                if (parent != null) {
-                    if (matches(parent.command().split("\\s")[0], command, false)) {
-                        matches.add(commandListener);
-                    }
-                }
                 if (matches(cmd.command().split("\\s")[0], command, false)) {
                     matches.add(commandListener);
                 }

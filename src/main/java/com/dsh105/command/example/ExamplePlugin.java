@@ -100,6 +100,7 @@ public class ExamplePlugin extends JavaPlugin {
                 PRETEND_MANAGER.registerSubCommands(exampleCommand, this);
             }
 
+            // This command is registered as "example two" - the power of sub commands!
             @Command(
                     command = "two",
                     description = "Number the second one",
