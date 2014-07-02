@@ -30,19 +30,6 @@ import static org.mockito.Mockito.when;
 
 public class VariableMatcherTest {
 
-    private static VariableMatcher mockMatcher(String commandSyntax, String command) {
-        Command mockedCommand = mock(Command.class);
-        when(mockedCommand.command()).thenReturn(StringUtil.combineArray(" ", commandSyntax));
-
-        String[] commandParts = command.split("\\s");
-        CommandEvent mockedEvent = mock(CommandEvent.class);
-        when(mockedEvent.input()).thenReturn(StringUtil.combineArray(" ", commandParts));
-        for (int i = 0; i < commandParts.length; i++) {
-            when(mockedEvent.arg(i)).thenReturn(commandParts[i]);
-        }
-        return new VariableMatcher(mockedCommand, mockedEvent);
-    }
-
     @Test
     public void testVariables() {
         String[] commandSyntax = {"wow", "<much>", "doge", "<r:such|match>", "[command]"};
@@ -50,7 +37,7 @@ public class VariableMatcherTest {
         List<String> commandSyntaxArgs = Arrays.asList(commandSyntax);
         List<String> commandArgs = Arrays.asList(command);
 
-        VariableMatcher variableMatcher = mockMatcher(StringUtil.combineArray(" ", commandSyntax), StringUtil.combineArray(" ", command));
+        VariableMatcher variableMatcher = new VariableMatcher(StringUtil.combineArray(" ", commandSyntax), StringUtil.combineArray(" ", command));
 
         Assert.assertTrue(variableMatcher.matches());
         Assert.assertTrue(variableMatcher.testRegexVariables());
@@ -66,10 +53,10 @@ public class VariableMatcherTest {
 
     @Test
     public void testMatcher() {
-        VariableMatcher falseVariableMatcher = mockMatcher("match <r:nope>", "match yer");
+        VariableMatcher falseVariableMatcher = new VariableMatcher("match <r:nope>", "match yer");
         Assert.assertFalse(falseVariableMatcher.testRegexVariables());
 
-        VariableMatcher trueVariableMatcher = mockMatcher("match <r:yer>", "match yer");
+        VariableMatcher trueVariableMatcher = new VariableMatcher("match <r:yer>", "match yer");
         Assert.assertTrue(trueVariableMatcher.testRegexVariables());
     }
 }

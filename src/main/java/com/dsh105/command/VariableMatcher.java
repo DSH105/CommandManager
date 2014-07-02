@@ -28,41 +28,33 @@ public class VariableMatcher {
     private static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
     private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(r:([^>\\]]+))(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
-    private Command command;
-    private CommandEvent event;
+    private String command;
+    private String eventInput;
 
     private String syntaxPattern;
     private List<String> arguments;
     private HashMap<String, Range> variables;
     private HashMap<String, String> matchedArguments;
 
-    public VariableMatcher(Command command, CommandEvent event) {
+    public VariableMatcher(String command, String eventInput) {
         this.command = command;
-        this.event = event;
-        this.arguments = Arrays.asList(command.command().split("\\s"));
-    }
-
-    public Command getCommand() {
-        return command;
-    }
-
-    public CommandEvent getEvent() {
-        return event;
+        this.eventInput = eventInput;
+        this.arguments = Arrays.asList(command.split("\\s"));
     }
 
     protected String buildVariableSyntax() {
         if (variables == null) {
             variables = new HashMap<>();
         }
-        String syntaxPattern = command.command();
+        String syntaxPattern = command;
 
-        Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command.command());
+        Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
 
         while (syntaxMatcher.find()) {
             // Optional args can match something or nothing - make sure to account for that
             syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), (syntaxMatcher.group(2).endsWith("...") ? "(.+)" : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : ""));
             int startIndex = arguments.indexOf(syntaxMatcher.group(0));
-            variables.put(syntaxMatcher.group(2).replace("...", ""), new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? event.input().length() : startIndex));
+            variables.put(syntaxMatcher.group(2).replace("...", ""), new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() : startIndex));
         }
 
         this.syntaxPattern = syntaxPattern;
@@ -73,7 +65,7 @@ public class VariableMatcher {
         if (syntaxPattern == null) {
             buildVariableSyntax();
         }
-        return Pattern.compile("\\b" + syntaxPattern + "\\b").matcher(event.input()).matches();
+        return Pattern.compile("\\b" + syntaxPattern + "\\b").matcher(eventInput).matches();
     }
 
     public HashMap<String, Range> getVariables() {
@@ -90,7 +82,7 @@ public class VariableMatcher {
             HashMap<String, Range> variables = getVariables();
 
             for (Map.Entry<String, Range> entry : variables.entrySet()) {
-                String[] input = event.input().split("\\s");
+                String[] input = eventInput.split("\\s");
                 if (entry.getValue().getEndIndex() <= entry.getValue().getStartIndex()) {
                     matchedArguments.put(entry.getKey(), input[entry.getValue().getStartIndex()]);
                 } else {
@@ -102,7 +94,7 @@ public class VariableMatcher {
     }
 
     public boolean testRegexVariables() {
-        Matcher matcher = REGEX_SYNTAX_PATTERN.matcher(command.command());
+        Matcher matcher = REGEX_SYNTAX_PATTERN.matcher(command);
         while (matcher.find()) {
             if (Pattern.compile(matcher.group(2)).matcher(getMatchedArguments().get(matcher.group(1))).matches()) {
                 return true;

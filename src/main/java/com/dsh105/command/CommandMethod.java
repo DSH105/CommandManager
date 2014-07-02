@@ -19,14 +19,20 @@ package com.dsh105.command;
 
 import java.lang.reflect.Method;
 
-public class CommandMethod {
+public class CommandMethod implements Comparable<CommandMethod> {
 
     private Command command;
     private Method accessor;
+    private CommandListener parent;
 
-    public CommandMethod(Command command, Method accessor) {
+    public CommandMethod(CommandListener parent, Command command, Method accessor) {
+        this.parent = parent;
         this.command = command;
         this.accessor = accessor;
+    }
+
+    public CommandListener getParent() {
+        return parent;
     }
 
     public Command getCommand() {
@@ -35,5 +41,10 @@ public class CommandMethod {
 
     public Method getAccessor() {
         return accessor;
+    }
+
+    @Override
+    public int compareTo(CommandMethod commandMethod) {
+        return commandMethod.command.command().length() - command.command().length();
     }
 }

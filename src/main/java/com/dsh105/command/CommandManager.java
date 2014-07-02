@@ -46,7 +46,7 @@ public class CommandManager implements ICommandManager {
 
     private final CommandRegistry REGISTRY;
     private final ArrayList<CommandListener> COMMANDS = new ArrayList<>();
-    private final HashMap<CommandListener, CommandMethod> SUB_COMMANDS = new HashMap<>();
+    private final HashMap<CommandListener, ArrayList<CommandMethod>> SUB_COMMANDS = new HashMap<>();
     private HelpService HELP_SERVICE;
 
     /*
@@ -103,19 +103,17 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public Map<CommandListener, CommandMethod> getRegisteredSubCommands() {
+    public Map<CommandListener, ArrayList<CommandMethod>> getRegisteredSubCommands() {
         return Collections.unmodifiableMap(SUB_COMMANDS);
     }
 
     @Override
     public List<CommandMethod> getRegisteredSubCommands(CommandListener commandListener) {
-        ArrayList<CommandMethod> subCommands = new ArrayList<>();
-        for (Map.Entry<CommandListener, CommandMethod> entry : getRegisteredSubCommands().entrySet()) {
-            if (entry.getKey().equals(commandListener)) {
-                subCommands.add(entry.getValue());
-            }
+        ArrayList<CommandMethod> methods = SUB_COMMANDS.get(commandListener);
+        if (methods == null) {
+            methods = new ArrayList<>();
         }
-        return Collections.unmodifiableList(subCommands);
+        return Collections.unmodifiableList(methods);
     }
 
     @Override
@@ -259,37 +257,27 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public void registerSubCommands(CommandListener registerTo, CommandListener parent) {
-        registerSubCommands(registerTo, parent.getClass());
-    }
-
-    @Override
-    public void registerSubCommand(CommandListener registerTo, CommandListener parent, String methodName) {
-        registerSubCommand(registerTo, parent.getClass(), methodName);
-    }
-
-    @Override
-    public void registerSubCommands(CommandListener registerTo, Class<? extends CommandListener> parentClass) {
-        for (Method method : parentClass.getDeclaredMethods()) {
+    public void registerSubCommands(CommandListener registerTo, CommandListener parentListener) {
+        for (Method method : parentListener.getClass().getDeclaredMethods()) {
             if (method.getAnnotation(Command.class) != null) {
-                registerSubCommand(registerTo, parentClass, method.getName());
+                registerSubCommand(registerTo, parentListener, method.getName());
             }
         }
     }
 
     @Override
-    public void registerSubCommand(CommandListener registerTo, Class<? extends CommandListener> parentClass, String methodName) {
+    public void registerSubCommand(CommandListener registerTo, CommandListener parentListener, String methodName) {
         if (!isParent(registerTo)) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, ". Class must have a @Command annotation."));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Class must have a @Command annotation."));
         }
         final Command parent = registerTo.getClass().getAnnotation(Command.class);
-        Method method = new Reflection().reflect(parentClass).getSafeMethod(methodName).member();
+        Method method = new Reflection().reflect(parentListener.getClass()).getSafeMethod(methodName).member();
         final Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, ". Method must have a @Command annotation"));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Method must have a @Command annotation"));
         }
 
-        CommandMethod commandMethod = new CommandMethod(new Command() {
+        CommandMethod commandMethod = new CommandMethod(parentListener, new Command() {
             @Override
             public String description() {
                 return cmd.description();
@@ -328,13 +316,36 @@ public class CommandManager implements ICommandManager {
             }
         }, method);
         if (!isValid(commandMethod)) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
         }
-        SUB_COMMANDS.put(registerTo, commandMethod);
+        ArrayList<CommandMethod> existing = SUB_COMMANDS.get(registerTo);
+        if (existing == null) {
+            existing = new ArrayList<>();
+        }
+        existing.add(commandMethod);
+        SUB_COMMANDS.put(registerTo, existing);
 
         // No need to register to Bukkit because it's a sub command
 
         refreshHelpService();
+    }
+
+    @Override
+    public void registerSubCommands(CommandListener registerTo, Class<? extends CommandListener> parentClass) {
+        for (Method method : parentClass.getDeclaredMethods()) {
+            if (method.getAnnotation(Command.class) != null) {
+                registerSubCommand(registerTo, parentClass, method.getName());
+            }
+        }
+    }
+
+    @Override
+    public void registerSubCommand(CommandListener registerTo, Class<? extends CommandListener> parentClass, String methodName) {
+        try {
+            registerSubCommand(registerTo, parentClass.newInstance(), methodName);
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, "Failed to instantiate parent class. Please use CommandManager#registerSubCommand(CommandListener.class, CommandListener.class, String.class) instead."), e);
+        }
     }
 
     @Override
@@ -459,18 +470,18 @@ public class CommandManager implements ICommandManager {
         for (Method method : commandListener.getClass().getDeclaredMethods()) {
             Command cmd = method.getAnnotation(Command.class);
             if (cmd != null) {
-                methods.add(new CommandMethod(cmd, method));
+                methods.add(new CommandMethod(commandListener, cmd, method));
                 continue;
             }
 
             ParentCommand parentCommand = method.getAnnotation(ParentCommand.class);
             if (parentCommand != null) {
-                methods.add(new CommandMethod(commandListener.getClass().getAnnotation(Command.class), method));
+                methods.add(new CommandMethod(commandListener, commandListener.getClass().getAnnotation(Command.class), method));
             }
         }
 
         // Handle any sub-commands registered on-the-fly
-        for (CommandMethod subCommand : getRegisteredSubCommands().values()) {
+        for (CommandMethod subCommand : getRegisteredSubCommands(commandListener)) {
             methods.add(subCommand);
         }
 
@@ -479,19 +490,14 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public CommandMethod getCommandMethod(CommandListener commandListener, CommandEvent event) {
+        ArrayList<CommandMethod> methods = getCommandMethods(commandListener);
+        Collections.sort(methods);
         for (CommandMethod method : getCommandMethods(commandListener)) {
             if (!isValid(method)) {
                 continue;
             }
 
             Command cmd = method.getCommand();
-            VariableMatcher variableMatcher = new VariableMatcher(cmd, event);
-
-            // Test for any variables/regex and check if they meet the requirements
-            if (variableMatcher.matches() || variableMatcher.testRegexVariables()) {
-                // We found a match, yay
-                return method;
-            }
 
             ArrayList<String[]> commands = new ArrayList<>();
             commands.add(cmd.command().split("\\s"));
@@ -499,21 +505,34 @@ public class CommandManager implements ICommandManager {
                 commands.add(alias.split("\\s"));
             }
 
-            argsSearch: for (String[] args : commands) {
-                // Multi-command arguments that MATCH are more important
-                if (args.length > 1) {
-                    for (int i = 0; i < event.argsLength() && i < args.length; i++) {
-                        if (!matches(event.arg(i), args[i], false)) {
-                            continue argsSearch;
-                        }
-                    }
+            for (String[] args : commands) {
+                VariableMatcher variableMatcher = new VariableMatcher(StringUtil.combineArray(" ", args), event.input());
+
+                // Test for any variables/regex and check if they meet the requirements
+                if (variableMatcher.matches() || variableMatcher.testRegexVariables()) {
+                    // We found a match, yay
                     return method;
                 }
             }
 
-            // Match up any single-argument commands if a multi-argument match was not found abov
+            argsSearch: for (String[] args : commands) {
+                // Multi-command arguments that MATCH are more important
+                if (args.length > 1) {
+                    // Add one to include the actual command
+                    if (args.length == (event.argsLength() + 1)) {
+                        for (int i = 0; i < event.argsLength() && i < args.length; i++) {
+                            if (!matches(event.arg(i), args[i], false)) {
+                                continue argsSearch;
+                            }
+                        }
+                        return method;
+                    }
+                }
+            }
+
+            // Match up any single-argument commands if a multi-argument match was not found above
             for (String[] args : commands) {
-                if (matches(event.command(), args[0], false)) {
+                if (args.length == (event.argsLength() + 1) && matches(event.command(), args[0], false)) {
                     return method;
                 }
             }
@@ -571,24 +590,24 @@ public class CommandManager implements ICommandManager {
                 Command command = commandMethod.getCommand();
 
                 // Pair up a final matcher that the listener can use
-                event.setVariableMatcher(new VariableMatcher(command, event));
+                event.setVariableMatcher(new VariableMatcher(command.command(), event.input()));
 
                 if (command.permission().isEmpty() || event.canPerform(command.permission())) {
                     try {
-                        Class paramType = CommandSender.class;
+                        Class<?> paramType = CommandSender.class;
                         Type[] genericParameterTypes = commandMethod.getAccessor().getGenericParameterTypes();
                         for (Type genericType : genericParameterTypes) {
                             if (genericType instanceof ParameterizedType) {
                                 ParameterizedType parameterizedType = (ParameterizedType) genericType;
                                 Type[] paramArgTypes = parameterizedType.getActualTypeArguments();
                                 for (Type paramArgType : paramArgTypes) {
-                                    paramType = (Class) paramArgType;
+                                    paramType = (Class<?>) paramArgType;
                                 }
                             }
                         }
 
-                        if (event.sender().getClass().isAssignableFrom(paramType)) {
-                            if (!(boolean) commandMethod.getAccessor().invoke(commandListener, event)) {
+                        if (paramType.isAssignableFrom(event.sender().getClass())) {
+                            if (!(boolean) commandMethod.getAccessor().invoke(commandMethod.getParent(), event)) {
                                 String usage;
                                 if (command.usage().equals(DEFAULT_USAGE)) {
                                     Command parent = commandListener.getClass().getAnnotation(Command.class);

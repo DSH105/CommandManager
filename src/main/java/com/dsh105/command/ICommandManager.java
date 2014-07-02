@@ -38,7 +38,7 @@ public interface ICommandManager extends CommandExecutor, Iterable<CommandListen
 
     List<String> getRegisteredCommandNames();
 
-    Map<CommandListener, CommandMethod> getRegisteredSubCommands();
+    Map<CommandListener, ArrayList<CommandMethod>> getRegisteredSubCommands();
 
     List<CommandMethod> getRegisteredSubCommands(CommandListener commandListener);
 
