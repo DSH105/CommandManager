@@ -32,7 +32,7 @@ public class VariableMatcher {
     private CommandEvent event;
 
     private String syntaxPattern;
-    List<String> arguments;
+    private List<String> arguments;
     private HashMap<String, Integer> variables;
     private HashMap<String, String> matchedArguments;
 
