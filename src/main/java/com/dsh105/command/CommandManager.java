@@ -29,6 +29,8 @@ import org.bukkit.plugin.Plugin;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -573,15 +575,29 @@ public class CommandManager implements ICommandManager {
 
                 if (command.permission().isEmpty() || event.canPerform(command.permission())) {
                     try {
-                        if (!(boolean) commandMethod.getAccessor().invoke(commandListener, event)) {
-                            String usage;
-                            if (command.usage().equals(DEFAULT_USAGE)) {
-                                Command parent = commandListener.getClass().getAnnotation(Command.class);
-                                usage = parent == null ? DEFAULT_USAGE : parent.usage();
-                            } else {
-                                usage = command.usage();
+                        Class paramType = CommandSender.class;
+                        Type[] genericParameterTypes = commandMethod.getAccessor().getGenericParameterTypes();
+                        for (Type genericType : genericParameterTypes) {
+                            if (genericType instanceof ParameterizedType) {
+                                ParameterizedType parameterizedType = (ParameterizedType) genericType;
+                                Type[] paramArgTypes = parameterizedType.getActualTypeArguments();
+                                for (Type paramArgType : paramArgTypes) {
+                                    paramType = (Class) paramArgType;
+                                }
                             }
-                            event.respond(usage);
+                        }
+
+                        if (event.sender().getClass().isAssignableFrom(paramType)) {
+                            if (!(boolean) commandMethod.getAccessor().invoke(commandListener, event)) {
+                                String usage;
+                                if (command.usage().equals(DEFAULT_USAGE)) {
+                                    Command parent = commandListener.getClass().getAnnotation(Command.class);
+                                    usage = parent == null ? DEFAULT_USAGE : parent.usage();
+                                } else {
+                                    usage = command.usage();
+                                }
+                                event.respond(usage);
+                            }
                         }
                     } catch (IllegalAccessException | InvocationTargetException ignored) {
                         // Most likely the target type isn't valid
