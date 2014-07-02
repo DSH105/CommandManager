@@ -55,8 +55,8 @@ public class VariableMatcherTest {
         Assert.assertTrue(variableMatcher.matches());
         Assert.assertTrue(variableMatcher.testRegexVariables());
 
-        for (Map.Entry<String, Integer> entry : variableMatcher.getVariables().entrySet()) {
-            Assert.assertEquals(entry.getKey(), commandSyntax[entry.getValue()].replaceAll("<|>|\\[|\\]", ""));
+        for (Map.Entry<String, Range> entry : variableMatcher.getVariables().entrySet()) {
+            Assert.assertEquals(entry.getKey(), commandSyntax[entry.getValue().getStartIndex()].replaceAll("<|>|\\[|\\]", ""));
         }
 
         for (Map.Entry<String, String> entry : variableMatcher.getMatchedArguments().entrySet()) {

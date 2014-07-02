@@ -34,7 +34,7 @@ public class MockCommandListener implements CommandListener {
 
     @Command(
             command = "something <var>",
-            description = "Test variables",
+            description = "Test command",
             aliases = "v <var>"
     )
     public boolean variableCommand(CommandEvent event) {
@@ -54,6 +54,16 @@ public class MockCommandListener implements CommandListener {
     )
     public boolean testCommand(CommandEvent<Player> event) {
         event.respond("\"" + event.input() + "\" command fired.");
+        return true;
+    }
+
+    @Command(
+            command = "extra <info...>",
+            description = "Test command"
+    )
+    public boolean infoCommand(CommandEvent event) {
+        event.respond("\"" + event.input() + "\" command fired.");
+        event.respond("Variable length: " + event.variable("info").split("\\s").length + " (" + event.variable("info") + ")");
         return true;
     }
 }

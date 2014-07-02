@@ -33,7 +33,7 @@ public class VariableMatcher {
 
     private String syntaxPattern;
     private List<String> arguments;
-    private HashMap<String, Integer> variables;
+    private HashMap<String, Range> variables;
     private HashMap<String, String> matchedArguments;
 
     public VariableMatcher(Command command, CommandEvent event) {
@@ -60,8 +60,9 @@ public class VariableMatcher {
 
         while (syntaxMatcher.find()) {
             // Optional args can match something or nothing - make sure to account for that
-            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), "([^\\s]+)" + (syntaxMatcher.group(1).equals("[") ? "?" : ""));
-            variables.put(syntaxMatcher.group(2), arguments.indexOf(syntaxMatcher.group(0)));
+            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), (syntaxMatcher.group(2).endsWith("...") ? "(.+)" : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : ""));
+            int startIndex = arguments.indexOf(syntaxMatcher.group(0));
+            variables.put(syntaxMatcher.group(2).replace("...", ""), new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? event.input().length() : startIndex));
         }
 
         this.syntaxPattern = syntaxPattern;
@@ -72,10 +73,10 @@ public class VariableMatcher {
         if (syntaxPattern == null) {
             buildVariableSyntax();
         }
-        return Pattern.compile(syntaxPattern).matcher(event.input()).matches();
+        return Pattern.compile("\\b" + syntaxPattern + "\\b").matcher(event.input()).matches();
     }
 
-    public HashMap<String, Integer> getVariables() {
+    public HashMap<String, Range> getVariables() {
         if (variables == null) {
             buildVariableSyntax();
         }
@@ -86,10 +87,15 @@ public class VariableMatcher {
         if (matchedArguments == null) {
             matchedArguments = new HashMap<>();
 
-            HashMap<String, Integer> variables = getVariables();
+            HashMap<String, Range> variables = getVariables();
 
-            for (Map.Entry<String, Integer> entry : variables.entrySet()) {
-                matchedArguments.put(entry.getKey(), event.input().split("\\s")[entry.getValue()]);
+            for (Map.Entry<String, Range> entry : variables.entrySet()) {
+                String[] input = event.input().split("\\s");
+                if (entry.getValue().getEndIndex() <= entry.getValue().getStartIndex()) {
+                    matchedArguments.put(entry.getKey(), input[entry.getValue().getStartIndex()]);
+                } else {
+                    matchedArguments.put(entry.getKey(), StringUtil.combineArray(entry.getValue().getStartIndex(), " ", input));
+                }
             }
         }
         return matchedArguments;
