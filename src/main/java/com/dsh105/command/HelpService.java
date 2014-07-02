@@ -26,6 +26,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.util.ChatPaginator;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HelpService {
 
@@ -33,7 +36,8 @@ public class HelpService {
     private String PAGE_HEADER;
 
     private ICommandManager manager;
-    private Paginator<PowerMessage> paginator = new Paginator<>();
+    private Paginator<PowerMessage> paginator = new Paginator<>(6);
+    private boolean includePermissionChecks = true;
 
     public HelpService(ICommandManager manager) {
         this.manager = manager;
@@ -58,7 +62,7 @@ public class HelpService {
     }
 
     private void prepare(CommandMethod commandMethod) {
-        PowerMessage part = new MarkupBuilder().withText(manager.getHighlightColour() + "/" + commandMethod.getCommand().command() + manager.getFormatColour() + " - " + commandMethod.getCommand().description()).build();
+        PowerMessage part = new MarkupBuilder().withText(manager.getHighlightColour() + "/" + commandMethod.getCommand().command() + manager.getFormatColour() + " - " + commandMethod.getCommand().description() + (commandMethod.getCommand().permission().isEmpty() ? "" : " (" + commandMethod.getCommand().permission() + ")")).build();
         if (commandMethod.getCommand().help().length <= 0) {
             ArrayList<String> tooltip = new ArrayList<>();
             for (String help : commandMethod.getCommand().help()) {
@@ -85,6 +89,14 @@ public class HelpService {
         this.PAGE_NOT_FOUND = value;
     }
 
+    public boolean willIncludePermissionChecks() {
+        return includePermissionChecks;
+    }
+
+    public void setIncludePermissionChecks(boolean includePermissionChecks) {
+        this.includePermissionChecks = includePermissionChecks;
+    }
+
     public void prepare() {
         paginator.clear();
         for (CommandListener commandListener : manager.getRegisteredCommands()) {
@@ -98,11 +110,27 @@ public class HelpService {
     }
 
     public void sendPage(CommandSender sender, int pageNumber) {
-        if (!paginator.exists(pageNumber)) {
-            sender.sendMessage(PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + paginator.getPages()));
+        Paginator p = this.paginator;
+        if (willIncludePermissionChecks()) {
+            List<PowerMessage> messages = paginator.getRaw();
+            for (PowerMessage powerMessage : messages) {
+                Matcher matcher = Pattern.compile("/(.+) - (?:.+)\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
+                if (matcher.find()) {
+                    String permission = matcher.group(2);
+                    if (permission != null) {
+                        powerMessage.tooltip(ChatColor.ITALIC + (sender.hasPermission(permission) ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
+                    }
+                }
+            }
+            p = new Paginator<>(paginator.getPerPage(), messages.toArray(new PowerMessage[0]));
+        }
+
+
+        if (!p.exists(pageNumber)) {
+            sender.sendMessage(PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages()));
             return;
         }
-        sender.sendMessage(PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + paginator.getPages()));
-        paginator.sendPage(sender, pageNumber);
+        sender.sendMessage(PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages()));
+        p.sendPage(sender, pageNumber);
     }
 }
