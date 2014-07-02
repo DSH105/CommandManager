@@ -587,10 +587,17 @@ public class CommandManager implements ICommandManager {
             CommandMethod commandMethod = getCommandMethod(commandListener, event);
             if (commandMethod != null) {
 
+                Command parent = commandListener.getClass().getAnnotation(Command.class);
                 Command command = commandMethod.getCommand();
 
                 // Pair up a final matcher that the listener can use
                 event.setVariableMatcher(new VariableMatcher(command.command(), event.input()));
+
+                if (parent != null) {
+                    if (!parent.permission().isEmpty() && !event.canPerform(parent.permission())) {
+                        break;
+                    }
+                }
 
                 if (command.permission().isEmpty() || event.canPerform(command.permission())) {
                     try {
@@ -610,7 +617,6 @@ public class CommandManager implements ICommandManager {
                             if (!(boolean) commandMethod.getAccessor().invoke(commandMethod.getParent(), event)) {
                                 String usage;
                                 if (command.usage().equals(DEFAULT_USAGE)) {
-                                    Command parent = commandListener.getClass().getAnnotation(Command.class);
                                     usage = parent == null ? DEFAULT_USAGE : parent.usage();
                                 } else {
                                     usage = command.usage();
