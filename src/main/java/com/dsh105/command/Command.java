@@ -36,5 +36,5 @@ public @interface Command {
 
     String help() default "";
 
-    String usage() default "Unknown command. Type \"/help\" for help.";
+    String usage() default CommandManager.DEFAULT_USAGE;
 }

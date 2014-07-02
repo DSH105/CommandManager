@@ -34,6 +34,8 @@ import java.util.logging.Logger;
 
 public class CommandManager implements ICommandManager {
 
+    public static final String DEFAULT_USAGE = "Unknown command. Type \"/help\" for help.";
+
     private final static Logger LOGGER = Logger.getLogger("CommandManager");
 
     private final static String INVALID_SUB_COMMAND_WARNING = "%s has attempted to register an invalid command to %s (%s -> %s). %s";
@@ -572,7 +574,14 @@ public class CommandManager implements ICommandManager {
                 if (command.permission().isEmpty() || event.canPerform(command.permission())) {
                     try {
                         if (!(boolean) commandMethod.getAccessor().invoke(commandListener, event)) {
-                            event.respond(command.usage());
+                            String usage;
+                            if (command.usage().equals(DEFAULT_USAGE)) {
+                                Command parent = commandListener.getClass().getAnnotation(Command.class);
+                                usage = parent == null ? DEFAULT_USAGE : parent.usage();
+                            } else {
+                                usage = command.usage();
+                            }
+                            event.respond(usage);
                         }
                     } catch (IllegalAccessException | InvocationTargetException ignored) {
                         // Most likely the target type isn't valid
