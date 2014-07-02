@@ -17,12 +17,15 @@
 
 package com.dsh105.command;
 
+import com.dsh105.commodus.StringUtil;
 import com.dsh105.commodus.paginator.Paginator;
 import com.dsh105.powermessage.core.PowerMessage;
 import com.dsh105.powermessage.markup.MarkupBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.ChatPaginator;
+
+import java.util.ArrayList;
 
 public class HelpService {
 
@@ -56,9 +59,12 @@ public class HelpService {
 
     private void prepare(CommandMethod commandMethod) {
         PowerMessage part = new MarkupBuilder().withText(commandMethod.getCommand().description()).build();
-        String helpTooltip = new MarkupBuilder().withText(commandMethod.getCommand().help()).build().getContent();
-        if (!commandMethod.getCommand().help().isEmpty()) {
-            part.tooltip(helpTooltip);
+        if (commandMethod.getCommand().help().length <= 0) {
+            ArrayList<String> tooltip = new ArrayList<>();
+            for (String help : commandMethod.getCommand().help()) {
+                tooltip.add(new MarkupBuilder().withText(help).build().getContent());
+            }
+            part.tooltip(tooltip.toArray(StringUtil.EMPTY_STRING_ARRAY));
         }
         paginator.add(part);
     }
