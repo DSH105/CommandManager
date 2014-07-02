@@ -58,11 +58,11 @@ public class HelpService {
     }
 
     private void prepare(CommandMethod commandMethod) {
-        PowerMessage part = new MarkupBuilder().withText(commandMethod.getCommand().description()).build();
+        PowerMessage part = new MarkupBuilder().withText(manager.getHighlightColour() + "/" + commandMethod.getCommand().command() + manager.getFormatColour() + " - " + commandMethod.getCommand().description()).build();
         if (commandMethod.getCommand().help().length <= 0) {
             ArrayList<String> tooltip = new ArrayList<>();
             for (String help : commandMethod.getCommand().help()) {
-                tooltip.add(new MarkupBuilder().withText(help).build().getContent());
+                tooltip.add(new MarkupBuilder().withText(manager.getFormatColour() + help).build().getContent());
             }
             part.tooltip(tooltip.toArray(StringUtil.EMPTY_STRING_ARRAY));
         }
