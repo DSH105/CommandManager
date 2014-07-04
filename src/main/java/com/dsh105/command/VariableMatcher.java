@@ -84,7 +84,6 @@ public class VariableMatcher {
         if (syntaxPattern == null) {
             buildVariableSyntax();
         }
-        System.out.println("Pattern for \"" + command + "(\"" + eventInput + "\") -> \"" + syntaxPattern + "\"");
         return Pattern.compile("\\b" + syntaxPattern + "\\b").matcher(eventInput).matches();
     }
 
