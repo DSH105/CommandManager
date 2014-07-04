@@ -21,7 +21,9 @@ import com.captainbern.reflection.Reflection;
 import com.dsh105.command.exceptions.CommandInvalidException;
 import com.dsh105.command.registration.CommandRegistry;
 import com.dsh105.command.registration.DynamicPluginCommand;
+import com.dsh105.commodus.GeneralUtil;
 import com.dsh105.commodus.StringUtil;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -214,6 +216,10 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public void register(CommandListener commandListener) {
+        if (COMMANDS.contains(commandListener)) {
+            return;
+        }
+
         ArrayList<CommandMethod> bukkitRegistration = new ArrayList<>();
         if (getCommandMethods(commandListener).isEmpty()) {
             LOGGER.warning(owningPlugin.getName() + " has registered a command listener with no valid command methods: " + commandListener.getClass().getCanonicalName() + ".");
@@ -249,7 +255,7 @@ public class CommandManager implements ICommandManager {
                 for (String alias : command.aliases()) {
                     aliases.add(alias.split("\\s")[0]);
                 }
-                REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], aliases.toArray(StringUtil.EMPTY_STRING_ARRAY), command.description(), command.usage(), this, owningPlugin));
+                REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], new String[0], command.description().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), command.usage().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), this, owningPlugin));
             }
         }
 
@@ -270,6 +276,7 @@ public class CommandManager implements ICommandManager {
         if (!isParent(registerTo)) {
             throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Class must have a @Command annotation."));
         }
+
         final Command parent = registerTo.getClass().getAnnotation(Command.class);
         Method method = new Reflection().reflect(parentListener.getClass()).getSafeMethod(methodName).member();
         final Command cmd = method.getAnnotation(Command.class);
@@ -315,9 +322,15 @@ public class CommandManager implements ICommandManager {
                 return cmd.annotationType();
             }
         }, method);
+
         if (!isValid(commandMethod)) {
             throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
         }
+
+        if (SUB_COMMANDS.get(registerTo) != null && SUB_COMMANDS.get(registerTo).contains(commandMethod)) {
+            return;
+        }
+
         ArrayList<CommandMethod> existing = SUB_COMMANDS.get(registerTo);
         if (existing == null) {
             existing = new ArrayList<>();
@@ -515,7 +528,7 @@ public class CommandManager implements ICommandManager {
                 }
             }
 
-            argsSearch: for (String[] args : commands) {
+            /*argsSearch: for (String[] args : commands) {
                 // Multi-command arguments that MATCH are more important
                 if (args.length > 1) {
                     // Add one to include the actual command
@@ -535,7 +548,7 @@ public class CommandManager implements ICommandManager {
                 if (args.length == (event.argsLength() + 1) && matches(event.command(), args[0], false)) {
                     return method;
                 }
-            }
+            }*/
         }
         return null;
     }
@@ -573,7 +586,7 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String commandLabel, String[] args) {
-        return onCommand(sender, commandLabel + " " + StringUtil.combineArray(" ", args));
+        return onCommand(new CommandEvent<>(this, commandLabel, sender, args));
     }
 
     @Override
@@ -595,24 +608,26 @@ public class CommandManager implements ICommandManager {
 
                 if (parent != null) {
                     if (!parent.permission().isEmpty() && !event.canPerform(parent.permission())) {
-                        break;
+                        continue;
                     }
                 }
 
-                if (command.permission().isEmpty() || event.canPerform(command.permission())) {
-                    try {
-                        Class<?> paramType = CommandSender.class;
-                        Type[] genericParameterTypes = commandMethod.getAccessor().getGenericParameterTypes();
-                        for (Type genericType : genericParameterTypes) {
-                            if (genericType instanceof ParameterizedType) {
-                                ParameterizedType parameterizedType = (ParameterizedType) genericType;
-                                Type[] paramArgTypes = parameterizedType.getActualTypeArguments();
-                                for (Type paramArgType : paramArgTypes) {
+                try {
+                    Class<?> paramType = CommandSender.class;
+                    Type[] genericParameterTypes = commandMethod.getAccessor().getGenericParameterTypes();
+                    for (Type genericType : genericParameterTypes) {
+                        if (genericType instanceof ParameterizedType) {
+                            ParameterizedType parameterizedType = (ParameterizedType) genericType;
+                            Type[] paramArgTypes = parameterizedType.getActualTypeArguments();
+                            for (Type paramArgType : paramArgTypes) {
+                                if (paramArgType != null) {
                                     paramType = (Class<?>) paramArgType;
                                 }
                             }
                         }
+                    }
 
+                    if (command.permission().isEmpty() || event.canPerform(command.permission())) {
                         if (paramType.isAssignableFrom(event.sender().getClass())) {
                             if (!(boolean) commandMethod.getAccessor().invoke(commandMethod.getParent(), event)) {
                                 String usage;
@@ -623,13 +638,16 @@ public class CommandManager implements ICommandManager {
                                 }
                                 event.respond(usage);
                             }
+                        } else {
+                            event.respond(ResponseLevel.SEVERE, getNoAccessMessage());
                         }
-                    } catch (IllegalAccessException | InvocationTargetException ignored) {
-                        // Most likely the target type isn't valid
-                    } catch (Exception e) {
-                        event.respond(ResponseLevel.SEVERE, getErrorMessage());
-                        e.printStackTrace();
                     }
+                    return true;
+                } catch (IllegalAccessException | InvocationTargetException ignored) {
+                    // Most likely the target type isn't valid
+                } catch (Exception e) {
+                    event.respond(ResponseLevel.SEVERE, getErrorMessage());
+                    e.printStackTrace();
                 }
 
                 return true;
@@ -652,7 +670,9 @@ public class CommandManager implements ICommandManager {
                 }
             }
             Suggestion suggestion = new Suggestion(event.command(), possibleSuggestions.toArray(StringUtil.EMPTY_STRING_ARRAY));
-            event.respond(ResponseLevel.SEVERE, "Did you mean: " + ChatColor.ITALIC + StringUtil.combineArray(0, suggestion.getSuggestions(), ChatColor.RESET + "{c1}, " + ChatColor.ITALIC));
+            if (suggestion.getSuggestions().size() > 0) {
+                event.respond(ResponseLevel.SEVERE, "Did you mean: " + ChatColor.ITALIC + StringUtil.combine(ChatColor.RESET + "{c1}, " + ChatColor.ITALIC, suggestion.getSuggestions()));
+            }
         }
         return true;
     }

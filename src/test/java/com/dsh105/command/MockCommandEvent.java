@@ -38,4 +38,9 @@ public class MockCommandEvent<T extends CommandSender> extends CommandEvent<T> {
     public void respond(String response, ChatColor formatColour, ChatColor highlightColour) {
         System.out.println(response);
     }
+
+    @Override
+    public boolean canPerform(String permission) {
+        return true;
+    }
 }

@@ -32,7 +32,7 @@ public @interface Command {
 
     String permission() default "";
 
-    String[] aliases() default "";
+    String[] aliases() default {};
 
     String[] help() default {};
 

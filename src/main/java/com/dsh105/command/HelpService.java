@@ -53,7 +53,7 @@ public class HelpService {
         header.append("Help: ");
         header.append(manager.getPlugin().getName());
         header.append(" ");
-        header.append("({pages}/{total}");
+        header.append("({pages}/{total}) ");
         header.append(ChatColor.YELLOW);
         for (int i = header.length(); i < ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH; i++) {
             header.append("-");

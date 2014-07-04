@@ -38,11 +38,11 @@ public class CommandEvent<T extends CommandSender> {
     private VariableMatcher variableMatcher;
 
     public CommandEvent(CommandManager manager, String args, T sender) {
-        this(manager, sender, args.replaceAll("\\s+", " ").split("\\s"));
+        this(manager, sender, args.trim().replaceAll("\\s+", " ").split("\\s"));
     }
 
     public CommandEvent(CommandManager manager, T sender, String... args) {
-        this(manager, args[0], sender, StringUtil.combineArray(1, " ", args));
+        this(manager, args[0].trim(), sender, StringUtil.combineArray(1, " ", args));
     }
 
     public CommandEvent(CommandManager manager, String command, T sender, String... args) {
@@ -54,7 +54,7 @@ public class CommandEvent<T extends CommandSender> {
         ArrayList<String> argsList = new ArrayList<>();
         argsList.add(command);
         argsList.addAll(Arrays.asList(args));
-        this.input = StringUtil.combine(" ", argsList);
+        this.input = StringUtil.combine(" ", argsList).trim();
     }
 
     public Plugin getPlugin() {
@@ -102,14 +102,6 @@ public class CommandEvent<T extends CommandSender> {
     }
 
     public boolean canPerform(String permission) {
-        return canPerform(permission, (Class<? extends T>) Player.class);
-    }
-
-    public <S extends T> boolean canPerform(String permission, Class<S> typeRestriction) {
-        if (typeRestriction.isAssignableFrom(sender.getClass())) {
-            respond(ResponseLevel.SEVERE, manager.getNoAccessMessage());
-            return false;
-        }
         if (!sender.hasPermission(permission)) {
             respond(ResponseLevel.SEVERE, manager.getNoPermissionMessage());
             return false;

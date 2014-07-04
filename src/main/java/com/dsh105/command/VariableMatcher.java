@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// TODO: add a way for regex-enabled variables to have nice names
 public class VariableMatcher {
 
     private static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
@@ -56,6 +55,7 @@ public class VariableMatcher {
 
             Variable variable;
             Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
+
             Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(syntaxMatcher.group(0));
             if (regexMatcher.matches()) {
                 String regex = regexMatcher.group(1);
@@ -84,6 +84,7 @@ public class VariableMatcher {
         if (syntaxPattern == null) {
             buildVariableSyntax();
         }
+        System.out.println("Pattern for \"" + command + "(\"" + eventInput + "\") -> \"" + syntaxPattern + "\"");
         return Pattern.compile("\\b" + syntaxPattern + "\\b").matcher(eventInput).matches();
     }
 
@@ -136,12 +137,14 @@ public class VariableMatcher {
         if (matchedArguments == null) {
             matchedArguments = new HashMap<>();
 
+            String[] input = eventInput.split("\\s");
             for (Variable variable : getVariables()) {
-                String[] input = eventInput.split("\\s");
-                if (variable.getRange().getEndIndex() <= variable.getRange().getStartIndex()) {
-                    matchedArguments.put(variable, input[variable.getRange().getStartIndex()]);
-                } else {
-                    matchedArguments.put(variable, StringUtil.combineArray(variable.getRange().getStartIndex(), " ", input));
+                if (variable.getRange().getStartIndex() < input.length) {
+                    if (variable.getRange().getEndIndex() <= variable.getRange().getStartIndex()) {
+                        matchedArguments.put(variable, input[variable.getRange().getStartIndex()]);
+                    } else {
+                        matchedArguments.put(variable, StringUtil.combineArray(variable.getRange().getStartIndex(), " ", input));
+                    }
                 }
             }
         }
@@ -152,8 +155,11 @@ public class VariableMatcher {
         Matcher matcher = REGEX_SYNTAX_PATTERN.matcher(command);
         while (matcher.find()) {
             Variable variable = getVariableByName(matcher.group(matcher.group(2) == null ? 1 : 2));
-            if (variable.getPattern().matcher(getMatchedArguments().get(variable)).matches()) {
-                return true;
+            String regex = getMatchedArguments().get(variable);
+            if (regex != null) {
+                if (variable.getPattern().matcher(regex).matches()) {
+                    return true;
+                }
             }
         }
         return false;

@@ -17,30 +17,31 @@
 
 package com.dsh105.command;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class Suggestion {
 
     private String message;
-    private String suggestions;
+    private ArrayList<String> suggestions = new ArrayList<>();
 
     public Suggestion(String message, String... possibleSuggestions) {
         this.message = message;
-        StringBuilder builder = new StringBuilder();
         for (String suggestion : possibleSuggestions) {
-            if (message.startsWith(suggestion)) {
-                if (builder.length() > 0) {
-                    builder.append(", ");
+            if (!suggestions.contains(suggestion)) {
+                if (message.startsWith(suggestion)) {
+                    suggestions.add(suggestion);
                 }
-                builder.append(suggestion);
             }
         }
-        suggestions = builder.toString();
     }
 
     public String getMessage() {
         return message;
     }
 
-    public String getSuggestions() {
-        return suggestions;
+    public List<String> getSuggestions() {
+        return Collections.unmodifiableList(suggestions);
     }
 }
