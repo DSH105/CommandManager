@@ -527,28 +527,6 @@ public class CommandManager implements ICommandManager {
                     return method;
                 }
             }
-
-            /*argsSearch: for (String[] args : commands) {
-                // Multi-command arguments that MATCH are more important
-                if (args.length > 1) {
-                    // Add one to include the actual command
-                    if (args.length == (event.argsLength() + 1)) {
-                        for (int i = 0; i < event.argsLength() && i < args.length; i++) {
-                            if (!matches(event.arg(i), args[i], false)) {
-                                continue argsSearch;
-                            }
-                        }
-                        return method;
-                    }
-                }
-            }
-
-            // Match up any single-argument commands if a multi-argument match was not found above
-            for (String[] args : commands) {
-                if (args.length == (event.argsLength() + 1) && matches(event.command(), args[0], false)) {
-                    return method;
-                }
-            }*/
         }
         return null;
     }
