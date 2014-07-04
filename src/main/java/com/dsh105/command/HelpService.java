@@ -65,11 +65,13 @@ public class HelpService {
         String command = commandMethod.getCommand().command().replaceAll("(?:r:(?:(?:(?!,n:.+)[^>\\]])+))[^,>|\\]]*", "").replaceAll(",n:", "").replace("<>", "<undefined>");
         PowerMessage part = new MarkupBuilder().withText(manager.getHighlightColour() + "/" + command + manager.getFormatColour() + " - " + commandMethod.getCommand().description() + (commandMethod.getCommand().permission().isEmpty() ? "" : " (" + commandMethod.getCommand().permission() + ")")).build();
         if (commandMethod.getCommand().help().length <= 0) {
-            ArrayList<String> tooltip = new ArrayList<>();
+            ArrayList<String> tooltipLines = new ArrayList<>();
             for (String help : commandMethod.getCommand().help()) {
-                tooltip.add(new MarkupBuilder().withText(manager.getFormatColour() + help).build().getContent());
+                tooltipLines.add(new MarkupBuilder().withText(manager.getFormatColour() + help).build().getContent());
             }
-            part.tooltip(tooltip.toArray(StringUtil.EMPTY_STRING_ARRAY));
+            if (!tooltipLines.isEmpty()) {
+                part.tooltip(tooltipLines.toArray(StringUtil.EMPTY_STRING_ARRAY));
+            }
         }
         paginator.add(part);
     }
