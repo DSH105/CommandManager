@@ -52,12 +52,10 @@ public class VariableMatcher {
         Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
 
         while (syntaxMatcher.find()) {
-            // Optional args can match something or nothing - make sure to account for that
-            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), (syntaxMatcher.group(2).endsWith("...") ? "(.+)" : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : ""));
             int startIndex = arguments.indexOf(syntaxMatcher.group(0));
 
             Variable variable;
-            Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() : startIndex);
+            Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
             Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(syntaxMatcher.group(0));
             if (regexMatcher.matches()) {
                 String regex = regexMatcher.group(1);
@@ -66,6 +64,14 @@ public class VariableMatcher {
             } else {
                 variable = new Variable(syntaxMatcher.group(2).replace("...", ""), range);
             }
+
+            /*
+             * Conditions:
+             * If the regex exists, make use of it
+             * Optional args can match something or nothing
+             * Varargs style arguments can match anything, including spaces
+             */
+            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), (syntaxMatcher.group(2).endsWith("...") ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)" + (syntaxMatcher.group(1).equals("[") ? "?" : "")));
 
             variables.add(variable);
         }
