@@ -573,7 +573,7 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String commandLabel, String[] args) {
-        return onCommand(sender, StringUtil.combineArray(0, " ", args));
+        return onCommand(sender, commandLabel + " " + StringUtil.combineArray(" ", args));
     }
 
     @Override
