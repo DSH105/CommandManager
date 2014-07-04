@@ -62,7 +62,8 @@ public class HelpService {
     }
 
     private void prepare(CommandMethod commandMethod) {
-        PowerMessage part = new MarkupBuilder().withText(manager.getHighlightColour() + "/" + commandMethod.getCommand().command() + manager.getFormatColour() + " - " + commandMethod.getCommand().description() + (commandMethod.getCommand().permission().isEmpty() ? "" : " (" + commandMethod.getCommand().permission() + ")")).build();
+        String command = commandMethod.getCommand().command().replaceAll("(?:r:(?:(?:(?!,n:.+)[^>\\]])+))[^,>|\\]]*", "").replaceAll(",n:", "").replace("<>", "<undefined>");
+        PowerMessage part = new MarkupBuilder().withText(manager.getHighlightColour() + "/" + command + manager.getFormatColour() + " - " + commandMethod.getCommand().description() + (commandMethod.getCommand().permission().isEmpty() ? "" : " (" + commandMethod.getCommand().permission() + ")")).build();
         if (commandMethod.getCommand().help().length <= 0) {
             ArrayList<String> tooltip = new ArrayList<>();
             for (String help : commandMethod.getCommand().help()) {

@@ -27,15 +27,15 @@ import java.util.regex.Pattern;
 public class VariableMatcher {
 
     private static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
-    private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(r:([^>\\]]+))(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(?:r:((?:(?!,n:.+)[^>\\]])+))(?:,n:([^>\\]]+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private String command;
     private String eventInput;
 
     private String syntaxPattern;
     private List<String> arguments;
-    private HashMap<String, Range> variables;
-    private HashMap<String, String> matchedArguments;
+    private ArrayList<Variable> variables;
+    private HashMap<Variable, String> matchedArguments;
 
     public VariableMatcher(String command, String eventInput) {
         this.command = command;
@@ -45,7 +45,7 @@ public class VariableMatcher {
 
     protected String buildVariableSyntax() {
         if (variables == null) {
-            variables = new HashMap<>();
+            variables = new ArrayList<>();
         }
         String syntaxPattern = command;
 
@@ -55,7 +55,19 @@ public class VariableMatcher {
             // Optional args can match something or nothing - make sure to account for that
             syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), (syntaxMatcher.group(2).endsWith("...") ? "(.+)" : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : ""));
             int startIndex = arguments.indexOf(syntaxMatcher.group(0));
-            variables.put(syntaxMatcher.group(2).replace("...", ""), new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() : startIndex));
+
+            Variable variable;
+            Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() : startIndex);
+            Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(syntaxMatcher.group(0));
+            if (regexMatcher.matches()) {
+                String regex = regexMatcher.group(1);
+                String name = regexMatcher.group(2);
+                variable = new Variable(regex, name == null ? regex : name.replace("...", ""), range);
+            } else {
+                variable = new Variable(syntaxMatcher.group(2).replace("...", ""), range);
+            }
+
+            variables.add(variable);
         }
 
         this.syntaxPattern = syntaxPattern;
@@ -69,35 +81,72 @@ public class VariableMatcher {
         return Pattern.compile("\\b" + syntaxPattern + "\\b").matcher(eventInput).matches();
     }
 
-    public HashMap<String, Range> getVariables() {
+    public List<Variable> getVariables() {
         if (variables == null) {
             buildVariableSyntax();
         }
-        return variables;
+        return Collections.unmodifiableList(variables);
     }
 
-    public Map<String, String> getMatchedArguments() {
+    public Variable getVariableByName(String name) {
+        return getVariableByName(name, false);
+    }
+
+    public Variable getVariableByName(String name, boolean ignoreCase) {
+        for (Variable variable : getVariables()) {
+            if (ignoreCase) {
+                if (variable.getName().equalsIgnoreCase(name)) {
+                    return variable;
+                }
+            } else if (variable.getName().equals(name)) {
+                return variable;
+            }
+        }
+        return null;
+    }
+
+    public Variable getVariableByRegex(String regex) {
+        for (Variable variable : getVariables()) {
+            if (variable.getRegex().equals(regex)) {
+                return variable;
+            }
+        }
+        return null;
+    }
+
+    public String getMatchedArgumentByVariableName(String name) {
+        return getMatchedArgumentByVariableName(name, false);
+    }
+
+    public String getMatchedArgumentByVariableName(String name, boolean ignoreCase) {
+        return getMatchedArguments().get(getVariableByName(name, ignoreCase));
+    }
+
+    public String getMatchedArgumentByVariableRegex(String regex) {
+        return getMatchedArguments().get(getVariableByRegex(regex));
+    }
+
+    public Map<Variable, String> getMatchedArguments() {
         if (matchedArguments == null) {
             matchedArguments = new HashMap<>();
 
-            HashMap<String, Range> variables = getVariables();
-
-            for (Map.Entry<String, Range> entry : variables.entrySet()) {
+            for (Variable variable : getVariables()) {
                 String[] input = eventInput.split("\\s");
-                if (entry.getValue().getEndIndex() <= entry.getValue().getStartIndex()) {
-                    matchedArguments.put(entry.getKey(), input[entry.getValue().getStartIndex()]);
+                if (variable.getRange().getEndIndex() <= variable.getRange().getStartIndex()) {
+                    matchedArguments.put(variable, input[variable.getRange().getStartIndex()]);
                 } else {
-                    matchedArguments.put(entry.getKey(), StringUtil.combineArray(entry.getValue().getStartIndex(), " ", input));
+                    matchedArguments.put(variable, StringUtil.combineArray(variable.getRange().getStartIndex(), " ", input));
                 }
             }
         }
-        return matchedArguments;
+        return Collections.unmodifiableMap(matchedArguments);
     }
 
     public boolean testRegexVariables() {
         Matcher matcher = REGEX_SYNTAX_PATTERN.matcher(command);
         while (matcher.find()) {
-            if (Pattern.compile(matcher.group(2)).matcher(getMatchedArguments().get(matcher.group(1))).matches()) {
+            Variable variable = getVariableByName(matcher.group(matcher.group(2) == null ? 1 : 2));
+            if (variable.getPattern().matcher(getMatchedArguments().get(variable)).matches()) {
                 return true;
             }
         }

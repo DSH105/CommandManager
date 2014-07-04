@@ -74,7 +74,7 @@ public class CommandEvent<T extends CommandSender> {
     }
 
     public String variable(String variable) {
-        return variableMatcher.getMatchedArguments().get(variable);
+        return variableMatcher.getMatchedArgumentByVariableName(variable);
     }
 
     public String command() {
