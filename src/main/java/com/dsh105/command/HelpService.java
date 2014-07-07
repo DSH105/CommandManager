@@ -48,12 +48,18 @@ public class HelpService {
     private String buildHeader() {
         StringBuilder header = new StringBuilder();
         header.append(ChatColor.YELLOW);
-        header.append("--------- ");
-        header.append(ChatColor.WHITE);
+        header.append("------ ");
+        header.append(ChatColor.GOLD);
         header.append("Help: ");
         header.append(manager.getPlugin().getName());
         header.append(" ");
-        header.append("({pages}/{total}) ");
+        header.append("Page ");
+        header.append(ChatColor.RED);
+        header.append("{pages} ");
+        header.append(ChatColor.GOLD);
+        header.append("/ ");
+        header.append(ChatColor.RED);
+        header.append("{total} ");
         header.append(ChatColor.YELLOW);
         for (int i = header.length(); i < ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH; i++) {
             header.append("-");
@@ -63,11 +69,20 @@ public class HelpService {
 
     private void prepare(CommandMethod commandMethod) {
         String command = commandMethod.getCommand().command().replaceAll("(?:r:(?:(?:(?!,n:.+)[^>\\]])+))[^,>|\\]]*", "").replaceAll(",n:", "").replace("<>", "<undefined>");
-        PowerMessage part = new MarkupBuilder().withText(manager.getHighlightColour() + "/" + command + manager.getFormatColour() + " - " + commandMethod.getCommand().description() + (commandMethod.getCommand().permission().isEmpty() ? "" : " (" + commandMethod.getCommand().permission() + ")")).build();
-        if (commandMethod.getCommand().help().length <= 0) {
+        PowerMessage part = new MarkupBuilder()
+                .withText(manager.getHighlightColour().toString())
+                .withText("/")
+                .withText(command)
+                .withText(manager.getFormatColour().toString())
+                .withText(" - ")
+                .withText(commandMethod.getCommand().description())
+                .withText(commandMethod.getCommand().permission().isEmpty() ? "" : " (" + commandMethod.getCommand().permission() + ")")
+                .build();
+        part.suggest("/" + command);
+        if (commandMethod.getCommand().help().length > 0) {
             ArrayList<String> tooltipLines = new ArrayList<>();
             for (String help : commandMethod.getCommand().help()) {
-                tooltipLines.add(new MarkupBuilder().withText(manager.getFormatColour() + help).build().getContent());
+                tooltipLines.add(new MarkupBuilder().withText(manager.getHighlightColour() + "• " + manager.getFormatColour() + help).build().getContent());
             }
             if (!tooltipLines.isEmpty()) {
                 part.tooltip(tooltipLines.toArray(StringUtil.EMPTY_STRING_ARRAY));
@@ -120,9 +135,8 @@ public class HelpService {
                 Matcher matcher = Pattern.compile("/(.+) - (?:.+)\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
                     String permission = matcher.group(2);
-                    if (permission != null) {
-                        powerMessage.tooltip(ChatColor.ITALIC + (sender.hasPermission(permission) ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
-                    }
+                    boolean canPerform = permission == null || permission.isEmpty() || sender.hasPermission(permission);
+                    powerMessage.tooltip(ChatColor.ITALIC + (canPerform ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
                 }
             }
             p = new Paginator<>(paginator.getPerPage(), messages.toArray(new PowerMessage[0]));
