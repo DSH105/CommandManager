@@ -8,3 +8,4 @@ Feel free to add and contribute <3
 CommandManager is being used in (or is in the process of being implemented in):
 * [EchoPet](https://github.com/DSH105/EchoPet)
 * [HoloAPI](https://github.com/DSH105/HoloAPI)
+* [ServerTutorial](https://github.com/hawkfalcon/ServerTutorial)
