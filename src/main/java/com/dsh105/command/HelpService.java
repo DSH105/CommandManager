@@ -61,7 +61,7 @@ public class HelpService {
         header.append(ChatColor.RED);
         header.append("{total} ");
         header.append(ChatColor.YELLOW);
-        for (int i = header.length(); i < ChatPaginator.GUARANTEED_NO_WRAP_CHAT_PAGE_WIDTH; i++) {
+        for (int i = header.length(); i < ChatPaginator.AVERAGE_CHAT_PAGE_WIDTH; i++) {
             header.append("-");
         }
         return header.toString();
