@@ -121,9 +121,6 @@ public class HelpService {
             for (CommandMethod commandMethod : manager.getCommandMethods(commandListener)) {
                 prepare(commandMethod);
             }
-            for (CommandMethod subCommand : manager.getRegisteredSubCommands(commandListener)) {
-                prepare(subCommand);
-            }
         }
     }
 
