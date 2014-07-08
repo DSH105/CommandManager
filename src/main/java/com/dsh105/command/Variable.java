@@ -33,6 +33,7 @@ public class Variable {
     }
 
     public Variable(String fullName, String regex, String name, Range range) {
+        this.fullName = fullName;
         this.regex = regex;
         this.name = name;
         this.range = range;
