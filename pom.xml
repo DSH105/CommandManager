@@ -111,7 +111,7 @@
 
     <!-- Build -->
     <build>
-        <defaultGoal>clean test package install</defaultGoal>
+        <defaultGoal>clean test package</defaultGoal>
         <finalName>${project.name}</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
 
