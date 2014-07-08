@@ -60,9 +60,9 @@ public class VariableMatcher {
             if (regexMatcher.matches()) {
                 String regex = regexMatcher.group(1);
                 String name = regexMatcher.group(2);
-                variable = new Variable(regex, name == null ? regex : name.replace("...", ""), range);
+                variable = new Variable(syntaxMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range);
             } else {
-                variable = new Variable(syntaxMatcher.group(2).replace("...", ""), range);
+                variable = new Variable(syntaxMatcher.group(0), syntaxMatcher.group(2).replace("...", ""), range);
             }
 
             /*
@@ -162,5 +162,17 @@ public class VariableMatcher {
             }
         }
         return false;
+    }
+
+    public String replaceVariables(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        String modified = input;
+        for (Variable variable : getVariables()) {
+            String matchedArgument = getMatchedArgumentByVariableName(variable.getName());
+            modified = modified.replace(variable.getFullName(), matchedArgument == null ? "" : matchedArgument);
+        }
+        return modified;
     }
 }

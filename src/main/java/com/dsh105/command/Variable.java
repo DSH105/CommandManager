@@ -23,15 +23,16 @@ public class Variable {
 
     private Pattern pattern;
 
+    private String fullName;
     private String regex;
     private String name;
     private Range range;
 
-    public Variable(String name, Range range) {
-        this("", name, range);
+    public Variable(String fullName, String name, Range range) {
+        this(fullName, "", name, range);
     }
 
-    public Variable(String regex, String name, Range range) {
+    public Variable(String fullName, String regex, String name, Range range) {
         this.regex = regex;
         this.name = name;
         this.range = range;
@@ -43,6 +44,10 @@ public class Variable {
 
     public Pattern getPattern() {
         return pattern;
+    }
+
+    public String getFullName() {
+        return fullName;
     }
 
     public String getRegex() {

@@ -605,7 +605,13 @@ public class CommandManager implements ICommandManager {
                         }
                     }
 
-                    if (command.permission().isEmpty() || event.canPerform(command.permission())) {
+                    String permission = event.getVariableMatcher().replaceVariables(command.permission());
+
+                    while (permission.endsWith(".")) {
+                        permission = permission.substring(0, permission.length() - 1);
+                    }
+
+                    if (permission.isEmpty() || event.canPerform(permission)) {
                         if (paramType.isAssignableFrom(event.sender().getClass())) {
                             if (!(boolean) commandMethod.getAccessor().invoke(commandMethod.getParent(), event)) {
                                 String usage;
