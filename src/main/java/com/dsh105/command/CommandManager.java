@@ -138,6 +138,10 @@ public class CommandManager implements ICommandManager {
         }
     }
 
+    public String formatResponse(String input) {
+        return input.replace("{c1}", "" + getFormatColour()).replace("{c2}", "" + getHighlightColour());
+    }
+
     @Override
     public String getResponsePrefix() {
         return responsePrefix;
