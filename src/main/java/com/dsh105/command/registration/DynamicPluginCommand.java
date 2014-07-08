@@ -31,44 +31,27 @@ import java.util.Arrays;
  */
 public class DynamicPluginCommand extends Command implements PluginIdentifiableCommand {
 
-    protected final CommandExecutor owner;
+    protected final CommandExecutor registeredWith;
     protected final Plugin owningPlugin;
-    protected String[] permissions = new String[0];
 
-    public DynamicPluginCommand(String name, String[] aliases, String desc, String usage, CommandExecutor owner, Plugin plugin) {
+    public DynamicPluginCommand(String name, String[] aliases, String desc, String usage, CommandExecutor registeredWith, Plugin plugin) {
         super(name, desc, usage, Arrays.asList(aliases));
-        this.owner = owner;
+        this.registeredWith = registeredWith;
         this.owningPlugin = plugin;
     }
 
     @Override
     public boolean execute(CommandSender sender, String label, String[] args) {
-        return owner.onCommand(sender, this, label, args);
+        return owningPlugin.isEnabled() && registeredWith.onCommand(sender, this, label, args);
+
     }
 
-    public Object getOwner() {
-        return owner;
-    }
-
-    public void setPermissions(String[] permissions) {
-        this.permissions = permissions;
-        if (permissions != null) {
-            super.setPermission(StringUtils.join(permissions, ";"));
-        }
-    }
-
-    public String[] getPermissions() {
-        return permissions;
+    public CommandExecutor getRegisteredWith() {
+        return registeredWith;
     }
 
     @Override
     public Plugin getPlugin() {
         return owningPlugin;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public boolean testPermissionSilent(CommandSender sender) {
-        return permissions == null || permissions.length == 0 || super.testPermissionSilent(sender);
     }
 }

@@ -363,8 +363,13 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public void unregister(CommandListener commandListener) {
-        // TODO: Unregister from Bukkit
         COMMANDS.remove(commandListener);
+
+        if (REGISTRY != null) {
+            for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
+                REGISTRY.unregister(commandMethod.getCommand().command().split("\\s")[0]);
+            }
+        }
 
         refreshHelpService();
     }

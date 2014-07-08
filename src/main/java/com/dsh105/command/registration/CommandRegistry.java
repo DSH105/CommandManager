@@ -20,6 +20,7 @@ package com.dsh105.command.registration;
 import com.captainbern.reflection.Reflection;
 import com.captainbern.reflection.accessor.FieldAccessor;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.Plugin;
@@ -37,10 +38,6 @@ public class CommandRegistry {
 
     public CommandRegistry(Plugin plugin) {
         this.plugin = plugin;
-    }
-
-    public void register(DynamicPluginCommand command) {
-        getCommandMap().register(this.plugin.getName(), command);
     }
 
     public CommandMap getCommandMap() {
@@ -62,5 +59,20 @@ public class CommandRegistry {
             }
         }
         return map;
+    }
+
+    public void register(DynamicPluginCommand command) {
+        getCommandMap().register(this.plugin.getName(), command);
+    }
+
+    public void unregister(DynamicPluginCommand command) {
+        command.unregister(getCommandMap());
+    }
+
+    public void unregister(String command) {
+        Command bukkitCommand = getCommandMap().getCommand(command);
+        if (bukkitCommand != null && bukkitCommand instanceof DynamicPluginCommand) {
+            unregister((DynamicPluginCommand) bukkitCommand);
+        }
     }
 }
