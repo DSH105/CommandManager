@@ -15,7 +15,7 @@
  * along with CommandManager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.dsh105.command.exceptions;
+package com.dsh105.command.exception;
 
 public class CommandInvalidException extends RuntimeException {
 

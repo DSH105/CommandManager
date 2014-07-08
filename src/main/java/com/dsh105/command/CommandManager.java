@@ -18,22 +18,16 @@
 package com.dsh105.command;
 
 import com.captainbern.reflection.Reflection;
-import com.dsh105.command.exceptions.CommandInvalidException;
+import com.dsh105.command.exception.CommandInvalidException;
+import com.dsh105.command.exception.CommandInvocationException;
 import com.dsh105.command.registration.CommandRegistry;
 import com.dsh105.command.registration.DynamicPluginCommand;
-import com.dsh105.command.registration.DynamicPluginCommandHelpTopicFactory;
-import com.dsh105.commodus.GeneralUtil;
 import com.dsh105.commodus.StringUtil;
-import org.apache.commons.lang.StringUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -645,14 +639,10 @@ public class CommandManager implements ICommandManager {
                         }
                     }
                     return true;
-                } catch (IllegalAccessException | InvocationTargetException ignored) {
-                    // Most likely the target type isn't valid
                 } catch (Exception e) {
                     event.respond(ResponseLevel.SEVERE, getErrorMessage());
-                    e.printStackTrace();
+                    throw new CommandInvocationException("Unhandled exception executing \"" + event.input() + "\" in " + owningPlugin.getName(), e);
                 }
-
-                return true;
             }
         }
 
