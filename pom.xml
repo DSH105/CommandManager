@@ -187,4 +187,10 @@
             </plugin>
         </plugins>
     </reporting>
+    <distributionManagement>
+        <repository>
+            <id>Hawk-Repo</id>
+            <url>http://ci.hawkfalcon.com/plugin/repository/everything/</url>
+        </repository>
+    </distributionManagement>
 </project>
