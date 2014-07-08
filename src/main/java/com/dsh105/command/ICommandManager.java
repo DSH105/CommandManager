@@ -118,6 +118,8 @@ public interface ICommandManager extends CommandExecutor, Iterable<CommandListen
 
     CommandMethod getCommandMethod(CommandListener commandListener, CommandEvent commandEvent);
 
+    CommandMethod getCommandMethod(CommandListener commandListener, String command);
+
     Method getParentCommandMethod(CommandListener commandListener);
 
     boolean isValid(CommandMethod commandMethod);

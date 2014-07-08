@@ -21,11 +21,15 @@ import com.captainbern.reflection.Reflection;
 import com.dsh105.command.exceptions.CommandInvalidException;
 import com.dsh105.command.registration.CommandRegistry;
 import com.dsh105.command.registration.DynamicPluginCommand;
+import com.dsh105.command.registration.DynamicPluginCommandHelpTopicFactory;
 import com.dsh105.commodus.GeneralUtil;
 import com.dsh105.commodus.StringUtil;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.annotation.Annotation;
@@ -38,7 +42,7 @@ import java.util.logging.Logger;
 
 public class CommandManager implements ICommandManager {
 
-    public static final String DEFAULT_USAGE = "Unknown command. Type \"/help\" for help.";
+    public static final String DEFAULT_USAGE = "Usage: /<command>";
 
     private final static Logger LOGGER = Logger.getLogger("CommandManager");
 
@@ -255,7 +259,7 @@ public class CommandManager implements ICommandManager {
                 for (String alias : command.aliases()) {
                     aliases.add(alias.split("\\s")[0]);
                 }
-                REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], new String[0], command.description().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), command.usage().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), this, owningPlugin));
+                REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], aliases.toArray(StringUtil.EMPTY_STRING_ARRAY), command.description().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), command.usage().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), this, owningPlugin));
             }
         }
 
@@ -508,6 +512,11 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public CommandMethod getCommandMethod(CommandListener commandListener, CommandEvent event) {
+        return getCommandMethod(commandListener, event.input());
+    }
+
+    @Override
+    public CommandMethod getCommandMethod(CommandListener commandListener, String command) {
         ArrayList<CommandMethod> methods = getCommandMethods(commandListener);
         Collections.sort(methods);
         for (CommandMethod method : getCommandMethods(commandListener)) {
@@ -524,7 +533,7 @@ public class CommandManager implements ICommandManager {
             }
 
             for (String[] args : commands) {
-                VariableMatcher variableMatcher = new VariableMatcher(StringUtil.combineArray(" ", args), event.input());
+                VariableMatcher variableMatcher = new VariableMatcher(StringUtil.combineArray(" ", args), command);
 
                 // Test for any variables/regex and check if they meet the requirements
                 if (variableMatcher.matches() || variableMatcher.testRegexVariables()) {

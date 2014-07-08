@@ -30,6 +30,10 @@ import org.bukkit.plugin.Plugin;
  */
 public class CommandRegistry {
 
+    static {
+        Bukkit.getHelpMap().registerHelpTopicFactory(DynamicPluginCommand.class, new DynamicPluginCommandHelpTopicFactory());
+    }
+
     protected static final FieldAccessor<CommandMap> SERVER_COMMAND_MAP = new Reflection().reflect(Bukkit.getServer().getPluginManager().getClass()).getSafeFieldByNameAndType("commandMap", CommandMap.class).getAccessor();
 
     private CommandMap fallback;

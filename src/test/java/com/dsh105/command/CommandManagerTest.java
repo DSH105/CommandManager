@@ -18,8 +18,10 @@
 package com.dsh105.command;
 
 import com.dsh105.commodus.StringUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.help.HelpMap;
 import org.bukkit.plugin.Plugin;
 import org.junit.Test;
 
@@ -28,8 +30,15 @@ import static org.mockito.Mockito.when;
 
 public class CommandManagerTest {
 
-    private static CommandManager COMMAND_MANAGER = new CommandManager(getMockedPlugin(), null, false, "CommandTest");
+    private static CommandManager COMMAND_MANAGER;
     private static Plugin MOCKED_PLUGIN;
+
+    public static CommandManager getCommandManager() {
+        if (COMMAND_MANAGER == null) {
+            COMMAND_MANAGER = new CommandManager(getMockedPlugin(), null, false, "[CommandTest]");
+        }
+        return COMMAND_MANAGER;
+    }
 
     public static Plugin getMockedPlugin() {
         if (MOCKED_PLUGIN == null) {
@@ -42,17 +51,17 @@ public class CommandManagerTest {
     @Test
     public void testCommands() {
         CommandListener parent = new MockCommandListener();
-        COMMAND_MANAGER.register(parent);
-        COMMAND_MANAGER.registerSubCommands(parent, MockSubCommandListener.class);
+        getCommandManager().register(parent);
+        getCommandManager().registerSubCommands(parent, MockSubCommandListener.class);
 
-        System.out.println("Registered commands: " + StringUtil.combineArray(0, ", ", COMMAND_MANAGER.getRegisteredCommandNames().toArray(StringUtil.EMPTY_STRING_ARRAY)));
+        System.out.println("Registered commands: " + StringUtil.combineArray(0, ", ", getCommandManager().getRegisteredCommandNames().toArray(StringUtil.EMPTY_STRING_ARRAY)));
 
         for (String command : new String[]{"parent", "something wow", "v wow", "variable", "extra command length woo", "parent sub"}) {
             System.out.println("Testing command: \"" + command + "\"");
-            COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(CommandSender.class)));
+            getCommandManager().onCommand(new MockCommandEvent<>(getCommandManager(), command, mock(CommandSender.class)));
 
             System.out.println("Testing command as Player: \"" + command + "\"");
-            COMMAND_MANAGER.onCommand(new MockCommandEvent<>(COMMAND_MANAGER, command, mock(Player.class)));
+            getCommandManager().onCommand(new MockCommandEvent<>(getCommandManager(), command, mock(Player.class)));
         }
     }
 }

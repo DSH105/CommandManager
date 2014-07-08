@@ -49,7 +49,7 @@ public class HelpService {
         StringBuilder header = new StringBuilder();
         header.append(ChatColor.YELLOW);
         header.append("------ ");
-        header.append(ChatColor.GOLD);
+        header.append(ChatColor.WHITE);
         header.append("Help: ");
         header.append(manager.getPlugin().getName());
         header.append(" ");
@@ -142,12 +142,13 @@ public class HelpService {
             p = new Paginator<>(paginator.getPerPage(), messages.toArray(new PowerMessage[0]));
         }
 
+        String pageHeader = PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages());
 
         if (!p.exists(pageNumber)) {
-            sender.sendMessage(PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages()));
+            sender.sendMessage(ChatColor.DARK_RED + "Page " + ChatColor.RED + pageNumber + " does not exist.");
             return;
         }
-        sender.sendMessage(PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages()));
+        sender.sendMessage(pageHeader);
         p.sendPage(sender, pageNumber);
     }
 }
