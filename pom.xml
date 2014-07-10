@@ -104,7 +104,7 @@
 
     <!-- Build -->
     <build>
-        <defaultGoal>clean test package</defaultGoal>
+        <defaultGoal>clean test package install</defaultGoal>
         <finalName>${project.name}</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
 
@@ -192,9 +192,9 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <artifact>com.captainbern:Minecraft-Reflection</artifact>
-                                    <artifact>com.dsh105:Commodus</artifact>
-                                    <artifact>com.dsh105:PowerMessage</artifact>
+                                    <include>com.captainbern:Minecraft-Reflection</include>
+                                    <include>com.dsh105:Commodus</include>
+                                    <include>com.dsh105:PowerMessage</include>
                                 </includes>
                             </artifactSet>
                         </configuration>
@@ -213,6 +213,7 @@
             </plugin>
         </plugins>
     </reporting>
+
     <distributionManagement>
         <repository>
             <id>Hawk-Repo</id>
