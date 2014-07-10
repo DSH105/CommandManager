@@ -67,7 +67,6 @@
             <groupId>com.dsh105</groupId>
             <artifactId>Commodus</artifactId>
             <version>1.0.1-SNAPSHOT</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- PowerMessage -->
@@ -75,7 +74,6 @@
             <groupId>com.dsh105</groupId>
             <artifactId>PowerMessage</artifactId>
             <version>1.0.0-SNAPSHOT</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- CaptainBern's Minecraft Reflection -->
@@ -83,7 +81,6 @@
             <groupId>com.captainbern</groupId>
             <artifactId>Minecraft-Reflection</artifactId>
             <version>1.0.0</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- JUnit unit testing -->
