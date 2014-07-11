@@ -281,9 +281,9 @@ public class CommandManager implements ICommandManager {
         final Command parent = registerTo.getClass().getAnnotation(Command.class);
         Method method = null;
         try {
-            method = parentListener.getClass().getDeclaredMethod(methodName);
+            method = parentListener.getClass().getDeclaredMethod(methodName, CommandEvent.class);
         } catch (NoSuchMethodException e) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Method does not exist!"));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Method does not exist or is not valid!"));
         }
         final Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
