@@ -622,7 +622,10 @@ public class CommandManager implements ICommandManager {
                         while (permission.endsWith(".")) {
                             permission = permission.substring(0, permission.length() - 1);
                         }
-                        permissions.add(event.getVariableMatcher().replaceVariables(permission));
+                        String matchedPermission = event.getVariableMatcher().replaceVariables(permission);
+                        if (matchedPermission != null) {
+                            permissions.add(matchedPermission);
+                        }
                     }
 
                     if (permissions.size() <= 0 || event.canPerform(permissions.toArray(StringUtil.EMPTY_STRING_ARRAY))) {

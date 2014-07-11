@@ -168,6 +168,15 @@ public class VariableMatcher {
         if (input == null || input.isEmpty()) {
             return input;
         }
+
+        Matcher optionalVariableMatcher = Pattern.compile("(?:\\[)([^\\]]+)(?:\\])").matcher(input);
+        while (optionalVariableMatcher.find()) {
+            if (getVariableByName(optionalVariableMatcher.group(1)) == null) {
+                // No variable = invalid permission = nuh-uh, don't use it
+                return null;
+            }
+        }
+
         String modified = input;
         for (Variable variable : getVariables()) {
             String matchedArgument = getMatchedArgumentByVariableName(variable.getName());
