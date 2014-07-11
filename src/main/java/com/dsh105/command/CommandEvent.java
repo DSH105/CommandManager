@@ -100,10 +100,12 @@ public class CommandEvent<T extends CommandSender> {
         return args[index];
     }
 
-    public boolean canPerform(String permission) {
-        if (!sender.hasPermission(permission)) {
-            respond(ResponseLevel.SEVERE, manager.getNoPermissionMessage());
-            return false;
+    public boolean canPerform(String... permissions) {
+        for (String permission : permissions) {
+            if (!sender.hasPermission(permission)) {
+                respond(ResponseLevel.SEVERE, manager.getNoPermissionMessage());
+                return false;
+            }
         }
         return true;
     }

@@ -30,7 +30,7 @@ public @interface Command {
 
     String description();
 
-    String permission() default "";
+    String[] permission() default "";
 
     String[] aliases() default {};
 

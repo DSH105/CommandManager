@@ -299,7 +299,7 @@ public class CommandManager implements ICommandManager {
             }
 
             @Override
-            public String permission() {
+            public String[] permission() {
                 return cmd.permission();
             }
 
@@ -597,7 +597,7 @@ public class CommandManager implements ICommandManager {
                 event.setVariableMatcher(new VariableMatcher(command.command(), event.input()));
 
                 if (parent != null) {
-                    if (!parent.permission().isEmpty() && !event.canPerform(parent.permission())) {
+                    if (parent.permission().length > 0 && !event.canPerform(parent.permission())) {
                         continue;
                     }
                 }
@@ -617,13 +617,15 @@ public class CommandManager implements ICommandManager {
                         }
                     }
 
-                    String permission = event.getVariableMatcher().replaceVariables(command.permission());
-
-                    while (permission.endsWith(".")) {
-                        permission = permission.substring(0, permission.length() - 1);
+                    List<String> permissions = new ArrayList<>();
+                    for (String permission : command.permission()) {
+                        while (permission.endsWith(".")) {
+                            permission = permission.substring(0, permission.length() - 1);
+                        }
+                        permissions.add(event.getVariableMatcher().replaceVariables(permission));
                     }
 
-                    if (permission.isEmpty() || event.canPerform(permission)) {
+                    if (permissions.size() <= 0 || event.canPerform(permissions.toArray(StringUtil.EMPTY_STRING_ARRAY))) {
                         if (paramType.isAssignableFrom(event.sender().getClass())) {
                             if (!(boolean) commandMethod.getAccessor().invoke(commandMethod.getParent(), event)) {
                                 String usage;
