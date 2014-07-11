@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
 
 public class VariableMatcher {
 
-    private static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
-    private static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(?:r:((?:(?!,n:.+)[^>\\]])+))(?:,n:([^>\\]]+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(?:r:((?:(?!,n:.+)[^>\\]])+))(?:,n:([^>\\]]+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private String command;
     private String eventInput;
@@ -71,7 +71,7 @@ public class VariableMatcher {
              * Optional args can match something or nothing
              * Varargs style arguments can match anything, including spaces
              */
-            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), (syntaxMatcher.group(2).endsWith("...") ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)" + (syntaxMatcher.group(1).equals("[") ? "?" : "")));
+            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), ((syntaxMatcher.group(2).endsWith("...") ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : "")));
 
             variables.add(variable);
         }
