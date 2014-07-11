@@ -78,14 +78,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- CaptainBern's Minecraft Reflection -->
-        <dependency>
-            <groupId>com.captainbern</groupId>
-            <artifactId>Minecraft-Reflection</artifactId>
-            <version>1.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-
         <!-- JUnit unit testing -->
         <dependency>
             <groupId>junit</groupId>
@@ -191,7 +183,6 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>com.captainbern:Minecraft-Reflection</include>
                                     <include>com.dsh105:Commodus</include>
                                     <include>com.dsh105:PowerMessage</include>
                                 </includes>

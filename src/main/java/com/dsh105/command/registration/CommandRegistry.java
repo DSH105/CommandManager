@@ -17,13 +17,13 @@
 
 package com.dsh105.command.registration;
 
-import com.captainbern.reflection.Reflection;
-import com.captainbern.reflection.accessor.FieldAccessor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.Plugin;
+
+import java.lang.reflect.Field;
 
 /**
  * Thanks @CaptainBern <3
@@ -32,9 +32,23 @@ public class CommandRegistry {
 
     static {
         Bukkit.getHelpMap().registerHelpTopicFactory(DynamicPluginCommand.class, new DynamicPluginCommandHelpTopicFactory());
+
+        try {
+            SERVER_COMMAND_MAP = Bukkit.getServer().getPluginManager().getClass().getDeclaredField("commandMap");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
     }
 
-    protected static final FieldAccessor<CommandMap> SERVER_COMMAND_MAP = new Reflection().reflect(Bukkit.getServer().getPluginManager().getClass()).getSafeFieldByNameAndType("commandMap", CommandMap.class).getAccessor();
+    protected static Field SERVER_COMMAND_MAP;
+
+    static {
+        try {
+            SERVER_COMMAND_MAP = Bukkit.getServer().getPluginManager().getClass().getDeclaredField("commandMap");
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+    }
 
     private CommandMap fallback;
 
@@ -48,7 +62,7 @@ public class CommandRegistry {
         CommandMap map;
 
         try {
-            map = SERVER_COMMAND_MAP.get(Bukkit.getPluginManager());
+            map = (CommandMap) SERVER_COMMAND_MAP.get(Bukkit.getPluginManager());
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to retrieve the CommandMap! Using fallback instead...");
             map = null;

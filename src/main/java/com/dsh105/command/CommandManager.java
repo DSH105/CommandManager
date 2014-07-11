@@ -17,7 +17,6 @@
 
 package com.dsh105.command;
 
-import com.captainbern.reflection.Reflection;
 import com.dsh105.command.exception.CommandInvalidException;
 import com.dsh105.command.exception.CommandInvocationException;
 import com.dsh105.command.registration.CommandRegistry;
@@ -280,7 +279,12 @@ public class CommandManager implements ICommandManager {
         }
 
         final Command parent = registerTo.getClass().getAnnotation(Command.class);
-        Method method = new Reflection().reflect(parentListener.getClass()).getSafeMethod(methodName).member();
+        Method method = null;
+        try {
+            method = parentListener.getClass().getDeclaredMethod(methodName);
+        } catch (NoSuchMethodException e) {
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Method does not exist!"));
+        }
         final Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
             throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Method must have a @Command annotation"));
