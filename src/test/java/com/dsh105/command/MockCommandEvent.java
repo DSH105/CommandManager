@@ -40,7 +40,7 @@ public class MockCommandEvent<T extends CommandSender> extends CommandEvent<T> {
     }
 
     @Override
-    public boolean canPerform(String permission) {
+    public boolean canPerform(String... permission) {
         return true;
     }
 }
