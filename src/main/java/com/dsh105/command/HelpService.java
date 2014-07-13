@@ -69,6 +69,7 @@ public class HelpService {
 
     private void prepare(CommandMethod commandMethod) {
         String command = commandMethod.getCommand().command().replaceAll("(?:r:(?:(?:(?!,n:.+)[^>\\]])+))[^,>|\\]]*", "").replaceAll(",n:", "").replace("<>", "<undefined>");
+        String permission = StringUtil.combineArray(", ", commandMethod.getCommand().permission()).trim();
         PowerMessage part = new MarkupBuilder()
                 .withText(manager.getHighlightColour().toString())
                 .withText("/")
@@ -76,7 +77,7 @@ public class HelpService {
                 .withText(manager.getFormatColour().toString())
                 .withText(" - ")
                 .withText(commandMethod.getCommand().description())
-                .withText(commandMethod.getCommand().permission().length == 0 ? "" : " (" + StringUtil.combineArray(", ", commandMethod.getCommand().permission()) + ")")
+                .withText(permission.isEmpty() ? "" : " (" + permission + ")")
                 .build();
         part.suggest("/" + command);
         if (commandMethod.getCommand().help().length > 0) {
