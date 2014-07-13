@@ -509,6 +509,10 @@ public class CommandManager implements ICommandManager {
     public ArrayList<CommandMethod> getCommandMethods(CommandListener commandListener) {
         ArrayList<CommandMethod> methods = new ArrayList<>();
         for (Method method : commandListener.getClass().getDeclaredMethods()) {
+            if (method.isAnnotationPresent(SubCommand.class)) {
+                // Skip - these are handled later
+                continue;
+            }
             Command cmd = method.getAnnotation(Command.class);
             if (cmd != null) {
                 methods.add(new CommandMethod(commandListener, cmd, method));
@@ -518,7 +522,6 @@ public class CommandManager implements ICommandManager {
             ParentCommand parentCommand = method.getAnnotation(ParentCommand.class);
             if (parentCommand != null) {
                 methods.add(new CommandMethod(commandListener, commandListener.getClass().getAnnotation(Command.class), method));
-
             }
         }
 
