@@ -76,7 +76,7 @@ public class HelpService {
                 .withText(manager.getFormatColour().toString())
                 .withText(" - ")
                 .withText(commandMethod.getCommand().description())
-                .withText(commandMethod.getCommand().permission().length < 0 ? "" : " (" + StringUtil.combineArray(", ", commandMethod.getCommand().permission()) + ")")
+                .withText(commandMethod.getCommand().permission().length == 0 ? "" : " (" + StringUtil.combineArray(", ", commandMethod.getCommand().permission()) + ")")
                 .build();
         part.suggest("/" + command);
         if (commandMethod.getCommand().help().length > 0) {
