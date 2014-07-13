@@ -225,6 +225,7 @@ public class CommandManager implements ICommandManager {
         if (getCommandMethods(commandListener).isEmpty()) {
             LOGGER.warning(owningPlugin.getName() + " has registered a command listener with no valid command methods: " + commandListener.getClass().getCanonicalName() + ".");
         }
+
         for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
             if (!isValid(commandMethod)) {
                 StringBuilder commandRequirements = new StringBuilder();
@@ -244,7 +245,12 @@ public class CommandManager implements ICommandManager {
                 }
                 throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), commandRequirements.toString()));
             }
-            bukkitRegistration.add(commandMethod);
+
+            if (isSubCommand(commandMethod)) {
+                registerSubCommand(commandMethod.getParent(), commandListener, commandMethod.getAccessor());
+            } else {
+                bukkitRegistration.add(commandMethod);
+            }
         }
         COMMANDS.add(commandListener);
 
@@ -256,6 +262,7 @@ public class CommandManager implements ICommandManager {
                 for (String alias : command.aliases()) {
                     aliases.add(alias.split("\\s")[0]);
                 }
+
                 REGISTRY.register(new DynamicPluginCommand(command.command().split("\\s")[0], aliases.toArray(StringUtil.EMPTY_STRING_ARRAY), command.description().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), command.usage().replace("{c1}", getFormatColour() + "").replace("{c2}", getHighlightColour() + ""), this, owningPlugin));
             }
         }
@@ -264,33 +271,38 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public void registerSubCommands(CommandListener registerTo, CommandListener parentListener) {
-        for (Method method : parentListener.getClass().getDeclaredMethods()) {
+    public void registerSubCommands(CommandListener parentListener, CommandListener methodOrigin) {
+        for (Method method : methodOrigin.getClass().getDeclaredMethods()) {
             if (method.getAnnotation(Command.class) != null) {
-                registerSubCommand(registerTo, parentListener, method.getName());
+                registerSubCommand(parentListener, methodOrigin, method.getName());
             }
         }
     }
 
     @Override
-    public void registerSubCommand(CommandListener registerTo, CommandListener parentListener, String methodName) {
-        if (!isParent(registerTo)) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Class must have a @Command annotation."));
+    public void registerSubCommand(CommandListener parentListener, CommandListener methodOrigin, Method method) {
+        registerSubCommand(parentListener, methodOrigin, method.getName());
+    }
+
+    @Override
+    public void registerSubCommand(CommandListener parentListener, CommandListener methodOrigin, String methodName) {
+        if (!isParent(parentListener)) {
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, ". Class must have a @Command annotation."));
         }
 
-        final Command parent = registerTo.getClass().getAnnotation(Command.class);
-        Method method = null;
+        final Command parent = parentListener.getClass().getAnnotation(Command.class);
+        Method method;
         try {
-            method = parentListener.getClass().getDeclaredMethod(methodName, CommandEvent.class);
+            method = methodOrigin.getClass().getDeclaredMethod(methodName, CommandEvent.class);
         } catch (NoSuchMethodException e) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Method does not exist or is not valid!"));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, ". SubCommand Method does not exist or is not valid!"));
         }
         final Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, ". Method must have a @Command annotation"));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, ". SubCommand Method must have a @Command annotation"));
         }
 
-        CommandMethod commandMethod = new CommandMethod(parentListener, new Command() {
+        CommandMethod commandMethod = new CommandMethod(methodOrigin, new Command() {
             @Override
             public String description() {
                 return cmd.description();
@@ -330,19 +342,19 @@ public class CommandManager implements ICommandManager {
         }, method);
 
         if (!isValid(commandMethod)) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentListener.getClass().getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, COMMAND_REQUIREMENTS));
         }
 
-        if (SUB_COMMANDS.get(registerTo) != null && SUB_COMMANDS.get(registerTo).contains(commandMethod)) {
+        if (SUB_COMMANDS.get(parentListener) != null && SUB_COMMANDS.get(parentListener).contains(commandMethod)) {
             return;
         }
 
-        ArrayList<CommandMethod> existing = SUB_COMMANDS.get(registerTo);
+        ArrayList<CommandMethod> existing = SUB_COMMANDS.get(parentListener);
         if (existing == null) {
             existing = new ArrayList<>();
         }
         existing.add(commandMethod);
-        SUB_COMMANDS.put(registerTo, existing);
+        SUB_COMMANDS.put(parentListener, existing);
 
         // No need to register to Bukkit because it's a sub command
 
@@ -365,6 +377,11 @@ public class CommandManager implements ICommandManager {
         } catch (InstantiationException | IllegalAccessException e) {
             throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), registerTo.getClass().getCanonicalName(), parentClass.getCanonicalName(), methodName, "Failed to instantiate parent class. Please use CommandManager#registerSubCommand(CommandListener.class, CommandListener.class, String.class) instead."), e);
         }
+    }
+
+    @Override
+    public void registerSubCommand(CommandListener registerTo, Class<? extends CommandListener> parentClass, Method method) {
+        registerSubCommand(registerTo, parentClass, method.getName());
     }
 
     @Override
@@ -501,6 +518,7 @@ public class CommandManager implements ICommandManager {
             ParentCommand parentCommand = method.getAnnotation(ParentCommand.class);
             if (parentCommand != null) {
                 methods.add(new CommandMethod(commandListener, commandListener.getClass().getAnnotation(Command.class), method));
+
             }
         }
 
@@ -576,6 +594,12 @@ public class CommandManager implements ICommandManager {
     @Override
     public boolean isParent(CommandListener commandListener) {
         return commandListener.getClass().isAnnotationPresent(Command.class);
+    }
+
+    @Override
+    public boolean isSubCommand(final CommandMethod commandMethod) {
+        Method accessor = commandMethod.getAccessor();
+        return accessor.getClass().isAnnotationPresent(SubCommand.class);
     }
 
     @Override
