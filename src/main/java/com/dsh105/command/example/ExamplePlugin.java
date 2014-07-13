@@ -55,7 +55,17 @@ public class ExamplePlugin extends JavaPlugin {
         @ParentCommand
         public boolean command(CommandEvent event) {
             event.respond("This is an example command. It does nothing. Hover for some text.[txt:Hello world!]");
-            event.respond("Try \"/example help\" for help!");
+            event.respond("Try \"/example help\" or \"/help\" for help!");
+            return true;
+        }
+
+        @SubCommand
+        @Command(
+                command = "help",
+                description = "An example help command"
+        )
+        public boolean exampleHelp(CommandEvent event) {
+            event.respond("This command is fired by \"/example help\", as it is marked so by a @SubCommand annotation");
             return true;
         }
 
