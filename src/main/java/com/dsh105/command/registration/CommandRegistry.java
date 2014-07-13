@@ -30,21 +30,14 @@ import java.lang.reflect.Field;
  */
 public class CommandRegistry {
 
+    protected static Field SERVER_COMMAND_MAP;
+
     static {
         Bukkit.getHelpMap().registerHelpTopicFactory(DynamicPluginCommand.class, new DynamicPluginCommandHelpTopicFactory());
 
         try {
             SERVER_COMMAND_MAP = Bukkit.getServer().getPluginManager().getClass().getDeclaredField("commandMap");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected static Field SERVER_COMMAND_MAP;
-
-    static {
-        try {
-            SERVER_COMMAND_MAP = Bukkit.getServer().getPluginManager().getClass().getDeclaredField("commandMap");
+            SERVER_COMMAND_MAP.setAccessible(true);
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
