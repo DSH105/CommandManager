@@ -132,8 +132,11 @@ public class HelpService {
                 Matcher matcher = Pattern.compile("/(.+) - (?:.+)\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
                     String permission = matcher.group(2);
-                    boolean canPerform = permission == null || permission.isEmpty() || sender.hasPermission(permission);
-                    powerMessage.tooltip(ChatColor.ITALIC + (canPerform ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
+                    if (permission != null && !permission.isEmpty()) {
+                        if (!VariableMatcher.containsVariables(permission)) {
+                            powerMessage.tooltip(ChatColor.ITALIC + (sender.hasPermission(permission) ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
+                        }
+                    }
                 }
             }
             p = new Paginator<>(paginator.getPerPage(), messages.toArray(new PowerMessage[0]));

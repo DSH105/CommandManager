@@ -184,4 +184,9 @@ public class VariableMatcher {
         }
         return modified;
     }
+
+    public static boolean containsVariables(String input) {
+        return input.matches(SYNTAX_PATTERN.pattern());
+    }
+
 }
