@@ -17,8 +17,6 @@
 
 package com.dsh105.command;
 
-import com.dsh105.commodus.paginator.Paginator;
-import com.dsh105.powermessage.core.PowerMessage;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -84,9 +82,13 @@ public interface ICommandManager extends CommandExecutor, Iterable<CommandListen
 
     void registerSubCommand(CommandListener registerTo, CommandListener parent, String methodName);
 
+    void registerSubCommand(CommandListener registerTo, CommandListener parent, Method method);
+
     void registerSubCommands(CommandListener registerTo, Class<? extends CommandListener> parentClass);
 
     void registerSubCommand(CommandListener registerTo, Class<? extends CommandListener> parentClass, String methodName);
+
+    void registerSubCommand(CommandListener registerTo, Class<? extends CommandListener> parentClass, Method method);
 
     void unregister(CommandListener commandListener);
 
@@ -129,6 +131,8 @@ public interface ICommandManager extends CommandExecutor, Iterable<CommandListen
     boolean isValid(CommandMethod commandMethod, Class<? extends CommandEvent> type);
 
     boolean isParent(CommandListener commandListener);
+
+    boolean isSubCommand(CommandMethod commandMethod);
 
     <T extends CommandSender> boolean onCommand(T sender, String args);
 
