@@ -145,7 +145,7 @@ public class HelpService {
         String pageHeader = PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages());
 
         if (!p.exists(pageNumber)) {
-            sender.sendMessage(ChatColor.DARK_RED + "Page " + ChatColor.RED + pageNumber + " does not exist.");
+            sender.sendMessage(ChatColor.DARK_RED + String.format(getPageNotFoundMessage(), "" + pageNumber));
             return;
         }
         sender.sendMessage(pageHeader);
