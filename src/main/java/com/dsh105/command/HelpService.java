@@ -132,10 +132,18 @@ public class HelpService {
             for (PowerMessage powerMessage : messages) {
                 Matcher matcher = Pattern.compile("/(.+) - (?:.+)\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
-                    String permission = matcher.group(2);
                     if (permission != null && !permission.isEmpty()) {
-                        if (!VariableMatcher.containsVariables(permission)) {
-                            powerMessage.tooltip(ChatColor.ITALIC + (sender.hasPermission(permission) ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
+                        String perm = matcher.group(2);
+                        String[] permissions = perm.split(", ");
+                        tooltip: {
+                            boolean access = true;
+                            for (String permission : permissions) {
+                                if (!VariableMatcher.containsVariables(permission) && permissions.length == 1) {
+                                    break tooltip;
+                                }
+                                access = sender.hasPermission(permission);
+                            }
+                            powerMessage.tooltip(ChatColor.ITALIC + (access ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
                         }
                     }
                 }
