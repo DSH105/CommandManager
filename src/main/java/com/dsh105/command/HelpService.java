@@ -132,8 +132,8 @@ public class HelpService {
             for (PowerMessage powerMessage : messages) {
                 Matcher matcher = Pattern.compile("/(.+) - (?:.+)\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
-                    if (permission != null && !permission.isEmpty()) {
-                        String perm = matcher.group(2);
+                    String perm = matcher.group(2);
+                    if (perm != null && !perm.isEmpty()) {
                         String[] permissions = perm.split(", ");
                         tooltip: {
                             boolean access = true;
