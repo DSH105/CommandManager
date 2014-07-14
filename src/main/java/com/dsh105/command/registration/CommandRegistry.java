@@ -24,6 +24,9 @@ import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Thanks @CaptainBern <3
@@ -31,6 +34,7 @@ import java.lang.reflect.Field;
 public class CommandRegistry {
 
     protected static Field SERVER_COMMAND_MAP;
+    private ArrayList<String> REGISTERED_COMMANDS;
 
     static {
         Bukkit.getHelpMap().registerHelpTopicFactory(DynamicPluginCommand.class, new DynamicPluginCommandHelpTopicFactory());
@@ -73,11 +77,17 @@ public class CommandRegistry {
     }
 
     public void register(DynamicPluginCommand command) {
+        if (REGISTERED_COMMANDS.contains(command.getName())) {
+            // Already registered with CommandManager -> no need to do so again
+            return;
+        }
         getCommandMap().register(this.plugin.getName(), command);
+        REGISTERED_COMMANDS.add(command.getName());
     }
 
     public void unregister(DynamicPluginCommand command) {
         command.unregister(getCommandMap());
+        REGISTERED_COMMANDS.remove(command.getName());
     }
 
     public void unregister(String command) {
@@ -85,5 +95,9 @@ public class CommandRegistry {
         if (bukkitCommand != null && bukkitCommand instanceof DynamicPluginCommand) {
             unregister((DynamicPluginCommand) bukkitCommand);
         }
+    }
+
+    public List<String> getRegisteredCommands() {
+        return Collections.unmodifiableList(REGISTERED_COMMANDS);
     }
 }
