@@ -45,12 +45,18 @@ public class CommandMethod implements Comparable<CommandMethod> {
 
     @Override
     public int compareTo(CommandMethod commandMethod) {
-        String command = getCommand().command().replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>");
-        String commandToCompare = commandMethod.getCommand().command().replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>");
+        String command = getCommand().command();
+        String commandToCompare = commandMethod.getCommand().command();
+
+        if (!VariableMatcher.containsVariables(command) && VariableMatcher.containsVariables(commandToCompare)) {
+            return 1;
+        } else if (VariableMatcher.containsVariables(command) && !VariableMatcher.containsVariables(commandToCompare)) {
+            return -1;
+        }
 
         // Useful for comparing certain commands
         // e.g. "/command <hello>" against "/command sub <hello>"
-        int variableDiff = command.indexOf("<>") - commandToCompare.indexOf("<>");
+        int variableDiff = command.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>") - commandToCompare.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>");
         if (variableDiff != 0) {
             return variableDiff;
         }

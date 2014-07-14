@@ -31,18 +31,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class CommandManager implements ICommandManager {
 
     public static final String DEFAULT_USAGE = "Usage: /<command>";
 
-    private final static Logger LOGGER = Logger.getLogger("CommandManager");
-
     private final static String INVALID_SUB_COMMAND_WARNING = "%s has attempted to register an invalid command to %s (%s -> %s). %s";
     private final static String INVALID_COMMAND_WARNING = "%s has attempted to register an invalid command (%s -> %s). %s";
     private final static String COMMAND_REQUIREMENTS = "Command method can only have one parameter (" + CommandEvent.class.getCanonicalName() + ") and return a boolean.";
 
+    private Logger LOGGER;
     private final CommandRegistry REGISTRY;
     private final ArrayList<CommandListener> COMMANDS = new ArrayList<>();
     private final HashMap<CommandListener, ArrayList<CommandMethod>> SUB_COMMANDS = new HashMap<>();
@@ -75,6 +75,10 @@ public class CommandManager implements ICommandManager {
         this.owningPlugin = owningPlugin;
         this.responsePrefix = responsePrefix;
         REGISTRY = commandRegistry;
+        LOGGER = owningPlugin.getLogger();
+        if (LOGGER == null) {
+            LOGGER = Logger.getLogger("CommandManager");
+        }
         if (enableHelpService) {
             this.enableHelpService();
         }
@@ -218,6 +222,7 @@ public class CommandManager implements ICommandManager {
     @Override
     public void register(CommandListener commandListener) {
         if (COMMANDS.contains(commandListener)) {
+            LOGGER.info("Command listener already registered!");
             return;
         }
 
@@ -227,17 +232,17 @@ public class CommandManager implements ICommandManager {
         }
 
         // Handle any sub commands (@SubCommand)
+        LOGGER.info(":OOOOO");
         for (Method method : commandListener.getClass().getDeclaredMethods()) {
+            LOGGER.info("yay");
+            LOGGER.info("checking for sub: " + method.getName());
             if (isSubCommand(method)) {
+                LOGGER.info("registered sub: " + method.getName());
                 registerSubCommand(commandListener, commandListener, method);
             }
         }
 
-        for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
-            if (isSubCommand(commandMethod.getAccessor())) {
-                // Skip it
-                continue;
-            }
+        for (CommandMethod commandMethod : getCommandMethods(commandListener, false)) {
             if (!isValid(commandMethod)) {
                 StringBuilder commandRequirements = new StringBuilder();
                 if (!commandMethod.getAccessor().getReturnType().equals(boolean.class)) {
@@ -511,9 +516,14 @@ public class CommandManager implements ICommandManager {
         return getCommandsFor(commandList, command, useAliases, true);
     }
 
-    // TODO: Some caching here?
     @Override
     public ArrayList<CommandMethod> getCommandMethods(CommandListener commandListener) {
+        return getCommandMethods(commandListener, true);
+    }
+
+    // TODO: Some caching here?
+    @Override
+    public ArrayList<CommandMethod> getCommandMethods(CommandListener commandListener, boolean includeSubCommands) {
         ArrayList<CommandMethod> methods = new ArrayList<>();
         for (Method method : commandListener.getClass().getDeclaredMethods()) {
             if (isSubCommand(method)) {
@@ -532,9 +542,11 @@ public class CommandManager implements ICommandManager {
             }
         }
 
-        // Handle any sub-commands registered on-the-fly
-        for (CommandMethod subCommand : getRegisteredSubCommands(commandListener)) {
-            methods.add(subCommand);
+        if (includeSubCommands) {
+            // Handle any sub-commands registered on-the-fly
+            for (CommandMethod subCommand : getRegisteredSubCommands(commandListener)) {
+                methods.add(subCommand);
+            }
         }
 
         return methods;

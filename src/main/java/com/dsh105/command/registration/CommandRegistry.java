@@ -77,17 +77,21 @@ public class CommandRegistry {
     }
 
     public void register(DynamicPluginCommand command) {
-        if (REGISTERED_COMMANDS.contains(command.getName())) {
+        if (REGISTERED_COMMANDS.contains(command.getName().toLowerCase().trim())) {
             // Already registered with CommandManager -> no need to do so again
             return;
         }
-        getCommandMap().register(this.plugin.getName(), command);
-        REGISTERED_COMMANDS.add(command.getName());
+        if (!getCommandMap().register(this.plugin.getName(), command)) {
+            // More of a backup for above
+            unregister(command);
+        } else {
+            REGISTERED_COMMANDS.add(command.getName().toLowerCase().trim());
+        }
     }
 
     public void unregister(DynamicPluginCommand command) {
         command.unregister(getCommandMap());
-        REGISTERED_COMMANDS.remove(command.getName());
+        REGISTERED_COMMANDS.remove(command.getName().toLowerCase().trim());
     }
 
     public void unregister(String command) {
