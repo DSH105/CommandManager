@@ -132,7 +132,7 @@ public interface ICommandManager extends CommandExecutor, Iterable<CommandListen
 
     boolean isParent(CommandListener commandListener);
 
-    boolean isSubCommand(CommandMethod commandMethod);
+    boolean isSubCommand(Method commandMethod);
 
     <T extends CommandSender> boolean onCommand(T sender, String args);
 

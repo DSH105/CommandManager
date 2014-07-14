@@ -246,13 +246,16 @@ public class CommandManager implements ICommandManager {
                 throw new CommandInvalidException(String.format(INVALID_COMMAND_WARNING, owningPlugin.getName(), commandListener.getClass().getCanonicalName(), commandMethod.getAccessor().getName(), commandRequirements.toString()));
             }
 
-            if (isSubCommand(commandMethod)) {
-                registerSubCommand(commandMethod.getParent(), commandListener, commandMethod.getAccessor());
-            } else {
-                bukkitRegistration.add(commandMethod);
-            }
+            bukkitRegistration.add(commandMethod);
         }
         COMMANDS.add(commandListener);
+
+        // Handle any sub commands (@SubCommand)
+        for (Method method : commandListener.getClass().getDeclaredMethods()) {
+            if (isSubCommand(method)) {
+                registerSubCommand(commandListener, commandListener, method);
+            }
+        }
 
         if (REGISTRY != null) {
             // Register all commands to Bukkit
@@ -509,7 +512,7 @@ public class CommandManager implements ICommandManager {
     public ArrayList<CommandMethod> getCommandMethods(CommandListener commandListener) {
         ArrayList<CommandMethod> methods = new ArrayList<>();
         for (Method method : commandListener.getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(SubCommand.class)) {
+            if (isSubCommand(method)) {
                 // Skip - these are handled later
                 continue;
             }
@@ -600,8 +603,7 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public boolean isSubCommand(final CommandMethod commandMethod) {
-        Method accessor = commandMethod.getAccessor();
+    public boolean isSubCommand(final Method accessor) {
         return accessor.getClass().isAnnotationPresent(SubCommand.class);
     }
 
