@@ -290,7 +290,7 @@ public class CommandManager implements ICommandManager {
     @Override
     public void registerSubCommand(CommandListener parentListener, CommandListener methodOrigin, String methodName) {
         if (!isParent(parentListener)) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, ". Class must have a @Command annotation."));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, "Class must have a @Command annotation."));
         }
 
         final Command parent = parentListener.getClass().getAnnotation(Command.class);
@@ -298,11 +298,11 @@ public class CommandManager implements ICommandManager {
         try {
             method = methodOrigin.getClass().getDeclaredMethod(methodName, CommandEvent.class);
         } catch (NoSuchMethodException e) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, ". SubCommand Method does not exist or is not valid!"));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, "SubCommand Method does not exist or is not valid!"));
         }
         final Command cmd = method.getAnnotation(Command.class);
         if (cmd == null) {
-            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, ". SubCommand Method must have a @Command annotation"));
+            throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, "SubCommand Method must have a @Command annotation"));
         }
 
         CommandMethod commandMethod = new CommandMethod(methodOrigin, new Command() {
@@ -604,7 +604,7 @@ public class CommandManager implements ICommandManager {
 
     @Override
     public boolean isSubCommand(final Method accessor) {
-        return accessor.getClass().isAnnotationPresent(SubCommand.class);
+        return accessor.isAnnotationPresent(SubCommand.class);
     }
 
     @Override
