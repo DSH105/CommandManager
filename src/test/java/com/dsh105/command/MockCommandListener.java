@@ -32,6 +32,16 @@ public class MockCommandListener implements CommandListener {
         return true;
     }
 
+    @SubCommand
+    @Command(
+            command = "test",
+            description = "Test sub command"
+    )
+    public boolean testSub(CommandEvent event) {
+        System.out.println("Sub command test executed");
+        return true;
+    }
+
     @Command(
             command = "something <var>",
             description = "Test command",

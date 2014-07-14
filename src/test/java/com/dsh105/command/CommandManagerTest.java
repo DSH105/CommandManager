@@ -56,7 +56,7 @@ public class CommandManagerTest {
 
         System.out.println("Registered commands: " + StringUtil.combineArray(0, ", ", getCommandManager().getRegisteredCommandNames().toArray(StringUtil.EMPTY_STRING_ARRAY)));
 
-        for (String command : new String[]{"parent", "something wow", "v wow", "variable", "extra command length woo", "parent sub"}) {
+        for (String command : new String[]{"parent", "parent test", "something wow", "v wow", "variable", "extra command length woo", "parent sub"}) {
             System.out.println("Testing command: \"" + command + "\"");
             getCommandManager().onCommand(new MockCommandEvent<>(getCommandManager(), command, mock(CommandSender.class)));
 

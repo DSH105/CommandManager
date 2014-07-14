@@ -231,13 +231,8 @@ public class CommandManager implements ICommandManager {
             LOGGER.warning(owningPlugin.getName() + " has registered a command listener with no valid command methods: " + commandListener.getClass().getCanonicalName() + ".");
         }
 
-        // Handle any sub commands (@SubCommand)
-        LOGGER.info(":OOOOO");
         for (Method method : commandListener.getClass().getDeclaredMethods()) {
-            LOGGER.info("yay");
-            LOGGER.info("checking for sub: " + method.getName());
             if (isSubCommand(method)) {
-                LOGGER.info("registered sub: " + method.getName());
                 registerSubCommand(commandListener, commandListener, method);
             }
         }
@@ -530,6 +525,7 @@ public class CommandManager implements ICommandManager {
                 // Skip - these are handled later
                 continue;
             }
+
             Command cmd = method.getAnnotation(Command.class);
             if (cmd != null) {
                 methods.add(new CommandMethod(commandListener, cmd, method));
@@ -561,7 +557,7 @@ public class CommandManager implements ICommandManager {
     public CommandMethod getCommandMethod(CommandListener commandListener, String command) {
         ArrayList<CommandMethod> methods = getCommandMethods(commandListener);
         Collections.sort(methods);
-        for (CommandMethod method : getCommandMethods(commandListener)) {
+        for (CommandMethod method : methods) {
             if (!isValid(method)) {
                 continue;
             }
@@ -619,7 +615,7 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public boolean isSubCommand(final Method accessor) {
+    public boolean isSubCommand(Method accessor) {
         return accessor.isAnnotationPresent(SubCommand.class);
     }
 
