@@ -226,7 +226,18 @@ public class CommandManager implements ICommandManager {
             LOGGER.warning(owningPlugin.getName() + " has registered a command listener with no valid command methods: " + commandListener.getClass().getCanonicalName() + ".");
         }
 
+        // Handle any sub commands (@SubCommand)
+        for (Method method : commandListener.getClass().getDeclaredMethods()) {
+            if (isSubCommand(method)) {
+                registerSubCommand(commandListener, commandListener, method);
+            }
+        }
+
         for (CommandMethod commandMethod : getCommandMethods(commandListener)) {
+            if (isSubCommand(commandMethod.getAccessor())) {
+                // Skip it
+                continue;
+            }
             if (!isValid(commandMethod)) {
                 StringBuilder commandRequirements = new StringBuilder();
                 if (!commandMethod.getAccessor().getReturnType().equals(boolean.class)) {
@@ -249,13 +260,6 @@ public class CommandManager implements ICommandManager {
             bukkitRegistration.add(commandMethod);
         }
         COMMANDS.add(commandListener);
-
-        // Handle any sub commands (@SubCommand)
-        for (Method method : commandListener.getClass().getDeclaredMethods()) {
-            if (isSubCommand(method)) {
-                registerSubCommand(commandListener, commandListener, method);
-            }
-        }
 
         if (REGISTRY != null) {
             // Register all commands to Bukkit
