@@ -21,6 +21,7 @@ import com.dsh105.commodus.StringUtil;
 import com.dsh105.commodus.paginator.Paginator;
 import com.dsh105.powermessage.core.PowerMessage;
 import com.dsh105.powermessage.markup.MarkupBuilder;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.ChatPaginator;
@@ -84,7 +85,7 @@ public class HelpService {
         if (commandMethod.getCommand().help().length > 0) {
             ArrayList<String> tooltipLines = new ArrayList<>();
             for (String help : commandMethod.getCommand().help()) {
-                tooltipLines.add(new MarkupBuilder().withText(manager.getHighlightColour() + "• " + manager.getFormatColour() + help).build().getContent());
+                tooltipLines.add(new MarkupBuilder().withText(manager.getHighlightColour() + "• " + manager.getFormatColour() + WordUtils.wrap(help, 30, "\n", false)).build().getContent());
             }
             if (!tooltipLines.isEmpty()) {
                 part.tooltip(tooltipLines.toArray(StringUtil.EMPTY_STRING_ARRAY));
@@ -141,6 +142,10 @@ public class HelpService {
             for (PowerMessage powerMessage : messages) {
                 Matcher matcher = Pattern.compile("(/(.+) - (?:.+))\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
+                    if (!willIncludePermissionsInHelp()) {
+                        powerMessage.clear().then(matcher.group(1));
+                    }
+
                     if (willIncludePermissionChecks()) {
                         String perm = matcher.group(3);
                         if (perm != null && !perm.isEmpty()) {
@@ -156,10 +161,6 @@ public class HelpService {
                                 powerMessage.tooltip(ChatColor.ITALIC + (access ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
                             }
                         }
-                    }
-
-                    if (!willIncludePermissionsInHelp()) {
-                        powerMessage.clear().then(matcher.group(1));
                     }
                 }
             }
