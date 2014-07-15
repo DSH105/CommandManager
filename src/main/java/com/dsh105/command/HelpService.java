@@ -139,7 +139,7 @@ public class HelpService {
         if (willIncludePermissionChecks() || !willIncludePermissionsInHelp()) {
             List<PowerMessage> messages = paginator.getRaw();
             for (PowerMessage powerMessage : messages) {
-                Matcher matcher = Pattern.compile("/(.+) - (?:.+)(\\(([^\\s]+)\\)?)").matcher(powerMessage.getContent());
+                Matcher matcher = Pattern.compile("(/(.+) - (?:.+))\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
                     if (willIncludePermissionChecks()) {
                         String perm = matcher.group(3);
@@ -159,7 +159,7 @@ public class HelpService {
                     }
 
                     if (!willIncludePermissionsInHelp()) {
-                        powerMessage.edit(powerMessage.getText().replace(matcher.group(2), ""));
+                        powerMessage.clear().then(matcher.group(1));
                     }
                 }
             }
