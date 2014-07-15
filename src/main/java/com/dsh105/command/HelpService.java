@@ -136,23 +136,25 @@ public class HelpService {
 
     public void sendPage(CommandSender sender, int pageNumber) {
         Paginator p = this.paginator;
-        if (willIncludePermissionChecks() && willIncludePermissionsInHelp()) {
+        if (willIncludePermissionChecks() || !willIncludePermissionsInHelp()) {
             List<PowerMessage> messages = paginator.getRaw();
             for (PowerMessage powerMessage : messages) {
                 Matcher matcher = Pattern.compile("/(.+)( - (?:.+)\\(([^\\s]+)\\)?)").matcher(powerMessage.getContent());
                 if (matcher.find()) {
-                    String perm = matcher.group(3);
-                    if (perm != null && !perm.isEmpty()) {
-                        String[] permissions = perm.split(", ");
-                        tooltip: {
-                            boolean access = true;
-                            for (String permission : permissions) {
-                                if (!VariableMatcher.containsVariables(permission) && permissions.length == 1) {
-                                    break tooltip;
+                    if (willIncludePermissionChecks()) {
+                        String perm = matcher.group(3);
+                        if (perm != null && !perm.isEmpty()) {
+                            String[] permissions = perm.split(", ");
+                            tooltip: {
+                                boolean access = true;
+                                for (String permission : permissions) {
+                                    if (!VariableMatcher.containsVariables(permission) && permissions.length == 1) {
+                                        break tooltip;
+                                    }
+                                    access = sender.hasPermission(permission);
                                 }
-                                access = sender.hasPermission(permission);
+                                powerMessage.tooltip(ChatColor.ITALIC + (access ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
                             }
-                            powerMessage.tooltip(ChatColor.ITALIC + (access ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
                         }
                     }
 
