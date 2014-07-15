@@ -38,6 +38,7 @@ public class HelpService {
     private ICommandManager manager;
     private Paginator<PowerMessage> paginator = new Paginator<>(6);
     private boolean includePermissionChecks = true;
+    private boolean includePermissionsInHelp = true;
 
     public HelpService(ICommandManager manager) {
         this.manager = manager;
@@ -116,6 +117,14 @@ public class HelpService {
         this.includePermissionChecks = includePermissionChecks;
     }
 
+    public void setIncludePermissionsInHelp(boolean flag) {
+        this.includePermissionsInHelp = flag;
+    }
+
+    public boolean willIncludePermissionsInHelp() {
+        return includePermissionsInHelp;
+    }
+
     public void prepare() {
         paginator.clear();
         for (CommandListener commandListener : manager.getRegisteredCommands()) {
@@ -127,12 +136,12 @@ public class HelpService {
 
     public void sendPage(CommandSender sender, int pageNumber) {
         Paginator p = this.paginator;
-        if (willIncludePermissionChecks()) {
+        if (willIncludePermissionChecks() && willIncludePermissionsInHelp()) {
             List<PowerMessage> messages = paginator.getRaw();
             for (PowerMessage powerMessage : messages) {
-                Matcher matcher = Pattern.compile("/(.+) - (?:.+)\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
+                Matcher matcher = Pattern.compile("/(.+)( - (?:.+)\\(([^\\s]+)\\)?)").matcher(powerMessage.getContent());
                 if (matcher.find()) {
-                    String perm = matcher.group(2);
+                    String perm = matcher.group(3);
                     if (perm != null && !perm.isEmpty()) {
                         String[] permissions = perm.split(", ");
                         tooltip: {
@@ -145,6 +154,10 @@ public class HelpService {
                             }
                             powerMessage.tooltip(ChatColor.ITALIC + (access ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
                         }
+                    }
+
+                    if (!willIncludePermissionsInHelp()) {
+                        powerMessage.edit(powerMessage.getText().replace(matcher.group(2), ""));
                     }
                 }
             }
