@@ -140,7 +140,7 @@ public class HelpService {
         if (willIncludePermissionChecks() || !willIncludePermissionsInHelp()) {
             List<PowerMessage> messages = paginator.getRaw();
             for (PowerMessage powerMessage : messages) {
-                Matcher matcher = Pattern.compile("(/(.+) - (?:.+))\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
+                Matcher matcher = Pattern.compile("(.+/(.+) - (?:.+))\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
                     if (!willIncludePermissionsInHelp()) {
                         powerMessage.clear().then(matcher.group(1));
