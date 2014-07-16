@@ -17,11 +17,13 @@
 
 package com.dsh105.command;
 
+import com.dsh105.command.exception.CommandInvalidException;
 import com.dsh105.commodus.StringUtil;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class VariableMatcher {
 
@@ -59,6 +61,11 @@ public class VariableMatcher {
             Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(syntaxMatcher.group(0));
             if (regexMatcher.matches()) {
                 String regex = regexMatcher.group(1);
+                try {
+                    Pattern.compile(regex);
+                } catch (PatternSyntaxException e) {
+                    throw new CommandInvalidException("Invalid pattern syntax for command (" + command + "): " + regex, e);
+                }
                 String name = regexMatcher.group(2);
                 variable = new Variable(syntaxMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range);
             } else {
