@@ -27,6 +27,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.util.ChatPaginator;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,8 +39,9 @@ public class HelpService {
 
     private ICommandManager manager;
     private Paginator<PowerMessage> paginator = new Paginator<>(6);
-    private boolean includePermissionChecks = true;
-    private boolean includePermissionsInHelp = true;
+    private boolean includePermissionTooltip = true;
+    private boolean includePermissionListing = true;
+    private boolean ignoreCommandAccess = true;
 
     public HelpService(ICommandManager manager) {
         this.manager = manager;
@@ -110,20 +112,28 @@ public class HelpService {
         this.PAGE_NOT_FOUND = value;
     }
 
-    public boolean willIncludePermissionChecks() {
-        return includePermissionChecks;
+    public boolean willIncludePermissionTooltip() {
+        return includePermissionTooltip;
     }
 
-    public void setIncludePermissionChecks(boolean includePermissionChecks) {
-        this.includePermissionChecks = includePermissionChecks;
+    public void setIncludePermissionTooltip(boolean flag) {
+        this.includePermissionTooltip = includePermissionTooltip;
     }
 
-    public void setIncludePermissionsInHelp(boolean flag) {
-        this.includePermissionsInHelp = flag;
+    public void setIncludePermissionListing(boolean flag) {
+        this.includePermissionListing = flag;
     }
 
-    public boolean willIncludePermissionsInHelp() {
-        return includePermissionsInHelp;
+    public boolean willIncludePermissionListing() {
+        return includePermissionListing;
+    }
+
+    public boolean willIgnoreCommandAccess() {
+        return ignoreCommandAccess;
+    }
+
+    public void setIgnoreCommandAccess(boolean flag) {
+        this.ignoreCommandAccess = ignoreCommandAccess;
     }
 
     public void prepare() {
@@ -137,16 +147,18 @@ public class HelpService {
 
     public void sendPage(CommandSender sender, int pageNumber) {
         Paginator p = this.paginator;
-        if (willIncludePermissionChecks() || !willIncludePermissionsInHelp()) {
+        if (willIncludePermissionTooltip() || !willIncludePermissionListing() || !willIgnoreCommandAccess()) {
             List<PowerMessage> messages = paginator.getRaw();
-            for (PowerMessage powerMessage : messages) {
+            Iterator<PowerMessage> iter = messages.iterator();
+            while (iter.hasNext()) {
+                PowerMessage powerMessage = iter.next();
                 Matcher matcher = Pattern.compile("(.+/(.+) - (?:.+))\\(([^\\s]+)\\)?").matcher(powerMessage.getContent());
                 if (matcher.find()) {
-                    if (!willIncludePermissionsInHelp()) {
+                    if (!willIncludePermissionListing()) {
                         powerMessage.clear().then(matcher.group(1));
                     }
 
-                    if (willIncludePermissionChecks()) {
+                    if (willIncludePermissionTooltip() || !willIgnoreCommandAccess()) {
                         String perm = matcher.group(3);
                         if (perm != null && !perm.isEmpty()) {
                             String[] permissions = perm.split(", ");
@@ -158,7 +170,13 @@ public class HelpService {
                                     }
                                     access = sender.hasPermission(permission);
                                 }
-                                powerMessage.tooltip(ChatColor.ITALIC + (access ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
+                                if (!access && !willIgnoreCommandAccess()) {
+                                    iter.remove();
+                                    continue;
+                                }
+                                if (willIncludePermissionTooltip()) {
+                                    powerMessage.tooltip(ChatColor.ITALIC + (access ? ChatColor.GREEN + "You may use this command" : ChatColor.RED + "You are not allowed to use this command"));
+                                }
                             }
                         }
                     }
