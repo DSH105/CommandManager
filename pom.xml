@@ -198,23 +198,33 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins>
-    </build>
-
-    <!-- JavaDoc -->
-    <reporting>
-        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
-    </reporting>
+
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ftp</artifactId>
+                <version>1.0-beta-6</version>
+            </extension>
+        </extensions>
+    </build>
 
     <distributionManagement>
         <repository>
-            <id>Hawk-Repo</id>
-            <url>http://ci.hawkfalcon.com/plugin/repository/everything/</url>
+            <id>dsh105-ftp</id>
+            <url>ftp://repo.dsh105.com/</url>
         </repository>
     </distributionManagement>
 </project>
