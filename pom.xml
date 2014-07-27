@@ -117,6 +117,14 @@
             </resource>
         </resources>
 
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ftp</artifactId>
+                <version>2.5</version>
+            </extension>
+        </extensions>
+
         <!-- Plugins -->
         <plugins>
             <!-- Clean up-->
@@ -222,14 +230,6 @@
                 </executions>
             </plugin>
         </plugins>
-
-        <extensions>
-            <extension>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-ftp</artifactId>
-                <version>2.5</version>
-            </extension>
-        </extensions>
     </build>
 
     <distributionManagement>
