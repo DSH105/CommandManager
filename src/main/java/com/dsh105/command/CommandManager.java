@@ -30,8 +30,12 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
-import java.util.logging.Level;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class CommandManager implements ICommandManager {
@@ -643,7 +647,7 @@ public class CommandManager implements ICommandManager {
 
                 if (parent != null) {
                     if (parent.permission().length > 0 && !event.canPerform(parent.permission())) {
-                        continue;
+	                    return true;
                     }
                 }
 
