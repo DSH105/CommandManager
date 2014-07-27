@@ -215,7 +215,7 @@
                 <version>2.8.1</version>
                 <executions>
                     <execution>
-                        <phase>install</phase>
+                        <phase>deploy</phase>
                         <goals>
                             <goal>deploy</goal>
                         </goals>
