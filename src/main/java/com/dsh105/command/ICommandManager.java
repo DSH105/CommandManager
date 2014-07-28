@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 // TODO: JavaDocs
-public interface ICommandManager extends CommandExecutor, Iterable<CommandListener> {
+public interface ICommandManager<T extends Plugin> extends CommandExecutor, Iterable<CommandListener> {
 
-    Plugin getPlugin();
+    T getPlugin();
 
     public List<CommandListener> getRegisteredCommands();
 

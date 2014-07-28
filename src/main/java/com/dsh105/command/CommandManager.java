@@ -38,7 +38,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class CommandManager implements ICommandManager {
+public class CommandManager<T extends Plugin> implements ICommandManager<T> {
 
     public static final String DEFAULT_USAGE = "Usage: /<command>";
 
@@ -60,22 +60,22 @@ public class CommandManager implements ICommandManager {
     private String ERROR = "Something unexpected happened. Please see the console for any errors and report them immediately.";
     private String COMMAND_NOT_FOUND = "That command does not exist.";
 
-    private Plugin owningPlugin;
+    private T owningPlugin;
 
     private String responsePrefix;
     private boolean suggestCommands;
     private ChatColor highlightColour = ChatColor.WHITE;
     private ChatColor formatColour = ChatColor.WHITE;
 
-    public CommandManager(Plugin owningPlugin) {
+    public CommandManager(T owningPlugin) {
         this(owningPlugin, "");
     }
 
-    public CommandManager(Plugin owningPlugin, String responsePrefix) {
+    public CommandManager(T owningPlugin, String responsePrefix) {
         this(owningPlugin, new CommandRegistry(owningPlugin), true, responsePrefix);
     }
 
-    protected CommandManager(Plugin owningPlugin, CommandRegistry commandRegistry, boolean enableHelpService, String responsePrefix) {
+    protected CommandManager(T owningPlugin, CommandRegistry commandRegistry, boolean enableHelpService, String responsePrefix) {
         this.owningPlugin = owningPlugin;
         this.responsePrefix = responsePrefix;
         REGISTRY = commandRegistry;
@@ -89,7 +89,7 @@ public class CommandManager implements ICommandManager {
     }
 
     @Override
-    public Plugin getPlugin() {
+    public T getPlugin() {
         return owningPlugin;
     }
 
