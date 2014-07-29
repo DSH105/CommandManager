@@ -128,19 +128,11 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
         return HELP_SERVICE;
     }
 
-    private void enableHelpService() {
-        HELP_SERVICE = new HelpService(this);
-    }
-
     @Override
     public void refreshHelpService() {
         if (HELP_SERVICE != null) {
             HELP_SERVICE.prepare();
         }
-    }
-
-    public String formatResponse(String input) {
-        return input.replace("{c1}", "" + getFormatColour()).replace("{c2}", "" + getHighlightColour());
     }
 
     @Override
@@ -291,11 +283,6 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
     }
 
     @Override
-    public void registerSubCommand(CommandListener parentListener, CommandListener methodOrigin, Method method) {
-        registerSubCommand(parentListener, methodOrigin, method.getName());
-    }
-
-    @Override
     public void registerSubCommand(CommandListener parentListener, CommandListener methodOrigin, String methodName) {
         if (!isParent(parentListener)) {
             throw new CommandInvalidException(String.format(INVALID_SUB_COMMAND_WARNING, owningPlugin.getName(), parentListener.getClass().getCanonicalName(), methodOrigin.getClass().getCanonicalName(), methodName, "Class must have a @Command annotation."));
@@ -370,6 +357,11 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
         // No need to register to Bukkit because it's a sub command
 
         refreshHelpService();
+    }
+
+    @Override
+    public void registerSubCommand(CommandListener parentListener, CommandListener methodOrigin, Method method) {
+        registerSubCommand(parentListener, methodOrigin, method.getName());
     }
 
     @Override
@@ -452,7 +444,9 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
     public <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command, boolean useAliases, boolean fuzzyMatching) {
         ArrayList<T> matches = new ArrayList<>();
         ArrayList<T> fuzzyMatches = new ArrayList<>();
-        listenerSearch: for (T commandListener : commandList) {
+        
+        listenerSearch:
+        for (T commandListener : commandList) {
             Command parent = commandListener.getClass().getAnnotation(Command.class);
             if (parent != null) {
                 if (matches(parent.command().split("\\s")[0], command, false)) {
@@ -495,9 +489,10 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
 
                 if (useAliases) {
                     for (String alias : method.getCommand().aliases()) {
-                    if (matches(alias.split("\\s")[0], command, true)) {
-                        fuzzyMatches.add(commandListener);
-                        break;
+                        if (matches(alias.split("\\s")[0], command, true)) {
+                            fuzzyMatches.add(commandListener);
+                            break;
+                        }
                     }
                 }
             }
@@ -639,13 +634,13 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String commandLabel, String[] args) {
-        return onCommand(new CommandEvent<>(this, commandLabel, sender, args));
+    public <T extends CommandSender> boolean onCommand(T sender, String args) {
+        return onCommand(new CommandEvent<>(this, sender, args));
     }
 
     @Override
-    public <T extends CommandSender> boolean onCommand(T sender, String args) {
-        return onCommand(new CommandEvent<>(this, sender, args));
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String commandLabel, String[] args) {
+        return onCommand(new CommandEvent<>(this, commandLabel, sender, args));
     }
 
     @Override
@@ -662,7 +657,7 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
 
                 if (parent != null) {
                     if (parent.permission().length > 0 && !event.canPerform(parent.permission())) {
-	                    return true;
+                        return true;
                     }
                 }
 
@@ -736,6 +731,14 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
             }
         }
         return true;
+    }
+
+    private void enableHelpService() {
+        HELP_SERVICE = new HelpService(this);
+    }
+
+    public String formatResponse(String input) {
+        return input.replace("{c1}", "" + getFormatColour()).replace("{c2}", "" + getHighlightColour());
     }
 
     @Override
