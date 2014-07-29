@@ -452,34 +452,49 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
     public <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command, boolean useAliases, boolean fuzzyMatching) {
         ArrayList<T> matches = new ArrayList<>();
         ArrayList<T> fuzzyMatches = new ArrayList<>();
-        for (T commandListener : commandList) {
+        listenerSearch: for (T commandListener : commandList) {
             Command parent = commandListener.getClass().getAnnotation(Command.class);
             if (parent != null) {
                 if (matches(parent.command().split("\\s")[0], command, false)) {
                     matches.add(commandListener);
                     continue;
                 }
+
+                if (useAliases) {
+                    for (String alias : parent.aliases()) {
+                        if (matches(alias.split("\\s")[0], command, false)) {
+                            matches.add(commandListener);
+                            continue listenerSearch;
+                        }
+                    }
+                }
             }
 
             for (CommandMethod method : getCommandMethods(commandListener)) {
                 Command cmd = method.getCommand();
+                // First check the actual command
                 if (matches(cmd.command().split("\\s")[0], command, false)) {
                     matches.add(commandListener);
                 }
 
-                for (String alias : method.getCommand().aliases()) {
-                    if (matches(alias.split("\\s")[0], command, false)) {
-                        matches.add(commandListener);
-                        break;
+                // Then the aliases
+                if (useAliases) {
+                    for (String alias : method.getCommand().aliases()) {
+                        if (matches(alias.split("\\s")[0], command, false)) {
+                            matches.add(commandListener);
+                            break;
+                        }
                     }
                 }
 
+                // Fuzzy stuff
                 if (matches(cmd.command().split("\\s")[0], command, true)) {
                     fuzzyMatches.add(commandListener);
                     continue;
                 }
 
-                for (String alias : method.getCommand().aliases()) {
+                if (useAliases) {
+                    for (String alias : method.getCommand().aliases()) {
                     if (matches(alias.split("\\s")[0], command, true)) {
                         fuzzyMatches.add(commandListener);
                         break;
