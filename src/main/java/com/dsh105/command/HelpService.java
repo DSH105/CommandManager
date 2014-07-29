@@ -38,13 +38,13 @@ public class HelpService {
     private String PAGE_NOT_FOUND = "Page %s does not exist";
     private String PAGE_HEADER;
 
-    private ICommandManager<?> manager;
+    private ICommandManager manager;
     private Paginator<PowerMessage> paginator = new Paginator<>(6);
     private boolean includePermissionTooltip = true;
     private boolean includePermissionListing = true;
     private boolean ignoreCommandAccess = true;
 
-    public HelpService(ICommandManager<?> manager) {
+    public HelpService(ICommandManager manager) {
         this.manager = manager;
 
         PAGE_HEADER = buildHeader();
