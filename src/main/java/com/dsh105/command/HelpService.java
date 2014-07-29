@@ -24,6 +24,7 @@ import com.dsh105.powermessage.markup.MarkupBuilder;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.ChatPaginator;
 
 import java.util.ArrayList;
@@ -37,13 +38,13 @@ public class HelpService {
     private String PAGE_NOT_FOUND = "Page %s does not exist";
     private String PAGE_HEADER;
 
-    private ICommandManager manager;
+    private ICommandManager<?> manager;
     private Paginator<PowerMessage> paginator = new Paginator<>(6);
     private boolean includePermissionTooltip = true;
     private boolean includePermissionListing = true;
     private boolean ignoreCommandAccess = true;
 
-    public HelpService(ICommandManager manager) {
+    public HelpService(ICommandManager<?> manager) {
         this.manager = manager;
 
         PAGE_HEADER = buildHeader();
@@ -117,7 +118,7 @@ public class HelpService {
     }
 
     public void setIncludePermissionTooltip(boolean flag) {
-        this.includePermissionTooltip = includePermissionTooltip;
+        this.includePermissionTooltip = flag;
     }
 
     public void setIncludePermissionListing(boolean flag) {
@@ -133,7 +134,7 @@ public class HelpService {
     }
 
     public void setIgnoreCommandAccess(boolean flag) {
-        this.ignoreCommandAccess = ignoreCommandAccess;
+        this.ignoreCommandAccess = flag;
     }
 
     public void prepare() {
