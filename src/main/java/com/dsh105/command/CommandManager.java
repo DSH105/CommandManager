@@ -315,7 +315,15 @@ public class CommandManager implements ICommandManager {
             @Override
             public String[] aliases() {
                 // Keep aliases for sub commands the same
-                return cmd.aliases();
+                ArrayList<String> aliases = new ArrayList<>();
+
+                for (String commandAlias : cmd.aliases()) {
+                    aliases.add(parent.command() + " " + commandAlias);
+                    for (String parentAlias : parent.aliases()) {
+                        aliases.add(parentAlias + " " + commandAlias);
+                    }
+                }
+                return aliases.toArray(StringUtil.EMPTY_STRING_ARRAY);
             }
 
             @Override
