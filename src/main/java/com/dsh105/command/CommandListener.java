@@ -18,4 +18,5 @@
 package com.dsh105.command;
 
 public interface CommandListener {
+
 }

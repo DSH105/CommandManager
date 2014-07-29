@@ -36,7 +36,7 @@ public class FallbackCommandRegistrationListener implements Listener {
 
     @EventHandler
             (ignoreCancelled = true,
-                    priority = EventPriority.MONITOR)
+             priority = EventPriority.MONITOR)
     public void onCommand(PlayerCommandPreprocessEvent event) {
         if (this.fallback.dispatch(event.getPlayer(), event.getMessage())) {
             event.setCancelled(true);

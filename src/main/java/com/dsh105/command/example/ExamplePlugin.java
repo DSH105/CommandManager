@@ -21,8 +21,6 @@ import com.dsh105.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Map;
-
 public class ExamplePlugin extends JavaPlugin {
 
     protected ICommandManager PRETEND_MANAGER;

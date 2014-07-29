@@ -18,10 +18,8 @@
 package com.dsh105.command;
 
 import com.dsh105.commodus.StringUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.help.HelpMap;
 import org.bukkit.plugin.Plugin;
 import org.junit.Test;
 

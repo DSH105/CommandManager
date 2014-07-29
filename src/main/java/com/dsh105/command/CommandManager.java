@@ -30,12 +30,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class CommandManager<T extends Plugin> implements ICommandManager<T> {
@@ -444,7 +439,7 @@ public class CommandManager<T extends Plugin> implements ICommandManager<T> {
     public <T extends CommandListener> ArrayList<T> getCommandsFor(ArrayList<T> commandList, String command, boolean useAliases, boolean fuzzyMatching) {
         ArrayList<T> matches = new ArrayList<>();
         ArrayList<T> fuzzyMatches = new ArrayList<>();
-        
+
         listenerSearch:
         for (T commandListener : commandList) {
             Command parent = commandListener.getClass().getAnnotation(Command.class);
