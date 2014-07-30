@@ -91,7 +91,7 @@ public class VariableMatcher {
         if (syntaxPattern == null) {
             buildVariableSyntax();
         }
-        return Pattern.compile("\\b" + syntaxPattern + "\\b").matcher(eventInput).matches();
+        return Pattern.compile("\\b" + syntaxPattern + "\\b", Pattern.CASE_INSENSITIVE).matcher(eventInput).matches();
     }
 
     public List<Variable> getVariables() {
