@@ -317,10 +317,16 @@ public class CommandManager implements ICommandManager {
                 // Keep aliases for sub commands the same
                 ArrayList<String> aliases = new ArrayList<>();
 
-                for (String commandAlias : cmd.aliases()) {
-                    aliases.add(parent.command() + " " + commandAlias);
+                if (cmd.aliases().length == 0){
                     for (String parentAlias : parent.aliases()) {
-                        aliases.add(parentAlias + " " + commandAlias);
+                        aliases.add(parentAlias + " " + cmd.command());
+                    }
+                } else {
+                    for (String commandAlias : cmd.aliases()) {
+                        aliases.add(parent.command() + " " + commandAlias);
+                        for (String parentAlias : parent.aliases()) {
+                            aliases.add(parentAlias + " " + commandAlias);
+                        }
                     }
                 }
                 return aliases.toArray(StringUtil.EMPTY_STRING_ARRAY);
