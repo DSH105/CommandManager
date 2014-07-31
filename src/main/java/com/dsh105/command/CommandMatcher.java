@@ -21,7 +21,7 @@ import java.util.*;
 
 public abstract class CommandMatcher {
 
-    public abstract List<CommandHandler> getAllRegisteredCommands();
+    public abstract Set<CommandHandler> getAllRegisteredCommands();
 
     public List<CommandHandler> matchCommands(String commandArguments) {
         return matchCommands(getAllRegisteredCommands(), commandArguments);
@@ -35,33 +35,38 @@ public abstract class CommandMatcher {
         return matchCommands(getAllRegisteredCommands(), commandArguments, matchAliases, enableFuzzyMatching);
     }
 
-    public List<CommandHandler> matchCommands(List<CommandHandler> commandHandlers, String commandArguments) {
+    public List<CommandHandler> matchCommands(Collection<CommandHandler> commandHandlers, String commandArguments) {
         return matchCommands(commandHandlers, commandArguments, true);
     }
 
-    public List<CommandHandler> matchCommands(List<CommandHandler> commandHandlers, String commandArguments, boolean matchAliases) {
+    public List<CommandHandler> matchCommands(Collection<CommandHandler> commandHandlers, String commandArguments, boolean matchAliases) {
         return matchCommands(commandHandlers, commandArguments, matchAliases, false);
     }
 
-    public List<CommandHandler> matchCommands(List<CommandHandler> commandHandlers, String commandArguments, boolean matchAliases, boolean enableFuzzyMatching) {
-        // TODO: Do something with this:
-        MatchCondition condition = new MatchCondition(commandArguments, matchAliases, enableFuzzyMatching);
+    public List<CommandHandler> matchCommands(Collection<CommandHandler> commandHandlers, String commandArguments, boolean matchAliases, boolean enableFuzzyMatching) {
+        // Only need to match the fist part of the command here
+        String command = commandArguments.split("\\s")[0];
 
+        // TODO: Do something with this:
+        MatchCondition condition = new MatchCondition(command, matchAliases, enableFuzzyMatching);
+
+        // A sortable list
         ArrayList<CommandHandler> matches = new ArrayList<>();
         ArrayList<CommandHandler> fuzzyMatches = new ArrayList<>();
 
         for (CommandHandler handler : commandHandlers) {
-            if (matches(handler, commandArguments, matchAliases, false)) {
+            if (matches(handler, command, matchAliases, false)) {
                 matches.add(handler);
             }
 
             if (enableFuzzyMatching) {
-                if (matches(handler, commandArguments, matchAliases, true)) {
+                if (matches(handler, command, matchAliases, true)) {
                     fuzzyMatches.add(handler);
                 }
             }
         }
 
+        // Sort in order of importance
         if (!fuzzyMatches.isEmpty()) {
             Collections.sort(fuzzyMatches);
 

@@ -44,15 +44,15 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
     /**
      * List of all registered listeners
      */
-    private final ArrayList<CommandListener> LISTENERS = new ArrayList<>();
+    private final HashSet<CommandListener> LISTENERS = new HashSet<>();
 
     /**
      * Maps command listeners to command handlers
      */
-    private final HashMap<CommandListener, ArrayList<CommandHandler>> COMMANDS = new HashMap<>();
+    private final HashMap<CommandListener, Set<CommandHandler>> COMMANDS = new HashMap<>();
 
 
-    private final HashMap<CommandListener, ArrayList<String>> COMMAND_NAMES = new HashMap<>();
+    private final HashMap<CommandListener, Set<String>> COMMAND_NAMES = new HashMap<>();
 
     public SimpleCommandManager(Plugin owningPlugin) {
         this(owningPlugin, "");
@@ -75,53 +75,53 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
     }
 
     @Override
-    public List<CommandListener> getRegisteredListeners() {
-        return Collections.unmodifiableList(LISTENERS);
+    public Set<CommandListener> getRegisteredListeners() {
+        return Collections.unmodifiableSet(LISTENERS);
     }
 
     @Override
-    public List<CommandHandler> getAllRegisteredCommands() {
-        ArrayList<CommandHandler> commandHandlers = new ArrayList<>();
-        for (ArrayList<CommandHandler> listenerHandlers : getRegisteredCommands().values()) {
+    public Set<CommandHandler> getAllRegisteredCommands() {
+        Set<CommandHandler> commandHandlers = new HashSet<>();
+        for (Set<CommandHandler> listenerHandlers : getRegisteredCommands().values()) {
             commandHandlers.addAll(listenerHandlers);
         }
-        return Collections.unmodifiableList(commandHandlers);
+        return Collections.unmodifiableSet(commandHandlers);
     }
 
     @Override
-    public Map<CommandListener, ArrayList<CommandHandler>> getRegisteredCommands() {
+    public Map<CommandListener, Set<CommandHandler>> getRegisteredCommands() {
         return Collections.unmodifiableMap(COMMANDS);
     }
 
     @Override
-    public List<CommandHandler> getRegisteredCommands(CommandListener parentListener) {
-        ArrayList<CommandHandler> commandHandlers = getRegisteredCommands().get(parentListener);
+    public Set<CommandHandler> getRegisteredCommands(CommandListener parentListener) {
+        Set<CommandHandler> commandHandlers = getRegisteredCommands().get(parentListener);
         if (commandHandlers == null) {
-            commandHandlers = new ArrayList<>();
+            commandHandlers = new HashSet<>();
         }
-        return Collections.unmodifiableList(commandHandlers);
+        return Collections.unmodifiableSet(commandHandlers);
     }
 
     @Override
-    public List<String> getAllRegisteredCommandNames() {
-        ArrayList<String> commandNames = new ArrayList<>();
-        for (ArrayList<String> listenerHandlers : getRegisteredCommandNames().values()) {
+    public Set<String> getAllRegisteredCommandNames() {
+        Set<String> commandNames = new HashSet<>();
+        for (Set<String> listenerHandlers : getRegisteredCommandNames().values()) {
             commandNames.addAll(listenerHandlers);
         }
-        return Collections.unmodifiableList(commandNames);
+        return Collections.unmodifiableSet(commandNames);
     }
 
     @Override
-    public List<String> getRegisteredCommandNames(CommandListener parentListener) {
-        ArrayList<String> commandNames = getRegisteredCommandNames().get(parentListener);
+    public Set<String> getRegisteredCommandNames(CommandListener parentListener) {
+        Set<String> commandNames = getRegisteredCommandNames().get(parentListener);
         if (commandNames == null) {
-            commandNames = new ArrayList<>();
+            commandNames = new HashSet<>();
         }
-        return Collections.unmodifiableList(commandNames);
+        return Collections.unmodifiableSet(commandNames);
     }
 
     @Override
-    public Map<CommandListener, ArrayList<String>> getRegisteredCommandNames() {
+    public Map<CommandListener, Set<String>> getRegisteredCommandNames() {
         return Collections.unmodifiableMap(COMMAND_NAMES);
     }
 
@@ -196,7 +196,6 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
 
         // Parent command info used in nested commands
         Command commandParent = commandListener.getClass().getAnnotation(Command.class);
-        String prefix = commandParent == null ? "" : commandParent.command() + " ";
 
         // Search through all methods for traces of command handlers
         for (Method method : commandListener.getClass().getDeclaredMethods()) {
@@ -205,21 +204,24 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
                 // Make sure this method is fine to register
                 ensureValidity(commandListener, method);
 
-                NestedCommand nestedCommand = method.getAnnotation(NestedCommand.class);
-                if (nestedCommand != null) {
-                    // This can't be a 'nested' command if there is no provided parent prefix
-                    if (prefix.isEmpty() && nestedCommand.parentCommand().isEmpty()) {
-                        throw new InvalidCommandException(String.format(INVALID_COMMAND_WARNING, getPlugin().getName(), commandListener.getClass().getCanonicalName(), method.getName(), "Either: Provide a value for \"parentCommand\" in the annotation, OR add the @Command annotation to the CommandListener class."));
-                    }
-
-                    registrationQueue.add(buildNestedCommand(commandListener, commandListener, nestedCommand.parentCommand().isEmpty() ? prefix : nestedCommand.parentCommand(), method, command, commandParent == null ? new String[0] : commandParent.aliases()));
+                if (method.isAnnotationPresent(NestedCommand.class)) {
+                    // These are handled later
                     continue;
                 }
 
                 // This command isn't a nested command, so we can treat it like normal
                 registrationQueue.add(new CommandHandler(commandListener, commandListener, command, method));
+                continue;
+            }
+
+            // Check if this method executes the parent command
+            if (method.isAnnotationPresent(ParentCommand.class)) {
+                registrationQueue.add(new CommandHandler(commandListener, commandListener, commandParent, method));
             }
         }
+
+        // Handle nested commands - only those marked as a nested command
+        nestCommandsIn(commandListener, commandListener, false);
 
         if (!registrationQueue.isEmpty()) {
             // Map commands to their appropriate destinations
@@ -230,6 +232,11 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
 
     @Override
     public void nestCommandsIn(CommandListener origin, CommandListener destination) {
+        nestCommandsIn(origin, destination, true);
+    }
+
+    @Override
+    public void nestCommandsIn(CommandListener origin, CommandListener destination, boolean includeAll) {
         ArrayList<CommandHandler> registrationQueue = new ArrayList<>();
 
         // Retrieve the prefix for this nested command
@@ -241,6 +248,11 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
                 ensureValidity(origin, method);
 
                 NestedCommand nestedCommand = method.getAnnotation(NestedCommand.class);
+                if (!includeAll && nestedCommand == null) {
+                    // Restrict nested commands to only those marked as nested (if this flag is set to true)
+                    continue;
+                }
+
                 if (nestedCommand != null) {
                     // This can't be a 'nested' command if there is no provided parent prefix
                     if (!nestedCommand.parentCommand().isEmpty()) {
@@ -286,19 +298,20 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
         if (COMMANDS.get(commandListener) != null) {
             System.out.println(COMMANDS.get(commandListener).size());
         }
-        ArrayList<CommandHandler> existing = COMMANDS.get(commandListener);
+        Set<CommandHandler> existing = COMMANDS.get(commandListener);
         if (existing == null) {
-            existing = new ArrayList<>();
+            existing = new HashSet<>();
         }
         existing.addAll(registrationQueue);
         COMMANDS.put(commandListener, existing);
 
-        ArrayList<String> existingNames = COMMAND_NAMES.get(commandListener);
+        Set<String> existingNames = COMMAND_NAMES.get(commandListener);
         if (existingNames == null) {
-            existingNames = new ArrayList<>();
+            existingNames = new HashSet<>();
         }
         for (CommandHandler commandHandler : registrationQueue) {
             existingNames.add(commandHandler.getCommandName());
+            Collections.addAll(existingNames, commandHandler.getCommand().aliases());
         }
         COMMAND_NAMES.put(commandListener, existingNames);
 

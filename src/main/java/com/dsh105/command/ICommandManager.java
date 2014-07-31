@@ -26,24 +26,25 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ICommandManager extends CommandExecutor, Iterable<CommandHandler> {
 
     Plugin getPlugin();
 
-    List<CommandListener> getRegisteredListeners();
+    Set<CommandListener> getRegisteredListeners();
 
-    List<CommandHandler> getAllRegisteredCommands();
+    Set<CommandHandler> getAllRegisteredCommands();
 
-    Map<CommandListener, ArrayList<CommandHandler>> getRegisteredCommands();
+    Map<CommandListener, Set<CommandHandler>> getRegisteredCommands();
 
-    List<CommandHandler> getRegisteredCommands(CommandListener parentListener);
+    Set<CommandHandler> getRegisteredCommands(CommandListener parentListener);
 
-    List<String> getAllRegisteredCommandNames();
+    Set<String> getAllRegisteredCommandNames();
 
-    List<String> getRegisteredCommandNames(CommandListener parentListener);
+    Set<String> getRegisteredCommandNames(CommandListener parentListener);
 
-    Map<CommandListener, ArrayList<String>> getRegisteredCommandNames();
+    Map<CommandListener, Set<String>> getRegisteredCommandNames();
 
     boolean isValid(Method accessor);
 
@@ -74,6 +75,8 @@ public interface ICommandManager extends CommandExecutor, Iterable<CommandHandle
     void register(CommandListener commandListener);
 
     void nestCommandsIn(CommandListener origin, CommandListener destination);
+
+    void nestCommandsIn(CommandListener origin, CommandListener destination, boolean includeAll);
 
     void unregister(CommandListener commandListener);
 
