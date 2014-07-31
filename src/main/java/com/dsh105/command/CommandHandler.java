@@ -78,7 +78,11 @@ public class CommandHandler implements Comparable<CommandHandler> {
 
         CommandHandler that = (CommandHandler) o;
 
-        return acceptedSenderType.equals(that.acceptedSenderType) && accessor.equals(that.accessor) && command.equals(that.command) && parent.equals(that.parent) && registeredTo.equals(that.registeredTo);
+        if (!acceptedSenderType.equals(that.acceptedSenderType)) return false;
+        if (!accessor.equals(that.accessor)) return false;
+        if (!command.equals(that.command)) return false;
+        if (!parent.equals(that.parent)) return false;
+        return registeredTo.equals(that.registeredTo);
 
     }
 
