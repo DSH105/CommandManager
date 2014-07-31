@@ -72,6 +72,27 @@ public class CommandHandler implements Comparable<CommandHandler> {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CommandHandler that = (CommandHandler) o;
+
+        return acceptedSenderType.equals(that.acceptedSenderType) && accessor.equals(that.accessor) && command.equals(that.command) && parent.equals(that.parent) && registeredTo.equals(that.registeredTo);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = parent.hashCode();
+        result = 31 * result + registeredTo.hashCode();
+        result = 31 * result + command.hashCode();
+        result = 31 * result + accessor.hashCode();
+        result = 31 * result + acceptedSenderType.hashCode();
+        return result;
+    }
+
+    @Override
     public int compareTo(CommandHandler handler) {
         String command = getCommandName();
         String commandToCompare = handler.getCommandName();
