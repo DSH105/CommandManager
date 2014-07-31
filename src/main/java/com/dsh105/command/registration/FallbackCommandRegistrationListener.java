@@ -24,7 +24,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 
 /**
- * Thanks CaptainBern <3
+ * Thanks CaptainBern ;D
  */
 public class FallbackCommandRegistrationListener implements Listener {
 
