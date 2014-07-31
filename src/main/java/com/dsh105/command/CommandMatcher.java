@@ -21,13 +21,6 @@ import java.util.*;
 
 public abstract class CommandMatcher {
 
-    /**
-     * Maps search results for a set of requested conditions
-     */
-    private final HashMap<MatchCondition, List<CommandHandler>> MATCHED_COMMANDS = new HashMap<>();
-
-    protected boolean updateNeeded;
-
     public abstract List<CommandHandler> getAllRegisteredCommands();
 
     public List<CommandHandler> matchCommands(String commandArguments) {
@@ -51,13 +44,8 @@ public abstract class CommandMatcher {
     }
 
     public List<CommandHandler> matchCommands(List<CommandHandler> commandHandlers, String commandArguments, boolean matchAliases, boolean enableFuzzyMatching) {
+        // TODO: Do something with this:
         MatchCondition condition = new MatchCondition(commandArguments, matchAliases, enableFuzzyMatching);
-        if (!updateNeeded) {
-            List<CommandHandler> matchedCommands = MATCHED_COMMANDS.get(condition);
-            if (matchedCommands != null) {
-                return matchedCommands;
-            }
-        }
 
         ArrayList<CommandHandler> matches = new ArrayList<>();
         ArrayList<CommandHandler> fuzzyMatches = new ArrayList<>();
@@ -74,10 +62,6 @@ public abstract class CommandMatcher {
             }
         }
 
-        if (!matches.isEmpty()) {
-            Collections.sort(matches);
-        }
-
         if (!fuzzyMatches.isEmpty()) {
             Collections.sort(fuzzyMatches);
 
@@ -86,7 +70,9 @@ public abstract class CommandMatcher {
             }
         }
 
-        MATCHED_COMMANDS.put(condition, matches);
+        if (!matches.isEmpty()) {
+            Collections.sort(matches);
+        }
         return matches;
     }
 

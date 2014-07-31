@@ -222,15 +222,8 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
         }
 
         if (!registrationQueue.isEmpty()) {
-            // Map commands to their appropriate desinations
-            LISTENERS.add(commandListener);
-            COMMANDS.put(commandListener, registrationQueue);
-
-            // Finally, register everything with Bukkit
-            if (getRegistry() != null) {
-                getRegistry().register(registrationQueue);
-            }
-            this.updateNeeded = true;
+            // Map commands to their appropriate destinations
+            mapCommands(commandListener, registrationQueue);
             refreshHelp();
         }
     }
@@ -264,14 +257,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
         }
 
         if (!registrationQueue.isEmpty()) {
-            if (!LISTENERS.contains(destination)) {
-                LISTENERS.add(destination);
-            }
-            COMMANDS.put(destination, registrationQueue);
-            if (getRegistry() != null) {
-                getRegistry().register(registrationQueue);
-            }
-            this.updateNeeded = true;
+            mapCommands(destination, registrationQueue);
             refreshHelp();
         }
     }
@@ -281,6 +267,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
         // This will also remove any nested commands that have been registered to this listener
         LISTENERS.remove(commandListener);
         COMMANDS.remove(commandListener);
+        COMMAND_NAMES.remove(commandListener);
         for (CommandHandler commandHandler : getRegisteredCommands(commandListener)) {
             // Unregister from Bukkit so that this command is no longer fired
             if (getRegistry() != null) {
@@ -288,8 +275,36 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
             }
         }
 
-        this.updateNeeded = true;
         refreshHelp();
+    }
+
+    private void mapCommands(CommandListener commandListener, Collection<CommandHandler> registrationQueue) {
+        if (LISTENERS.contains(commandListener)) {
+            LISTENERS.add(commandListener);
+        }
+
+        if (COMMANDS.get(commandListener) != null) {
+            System.out.println(COMMANDS.get(commandListener).size());
+        }
+        ArrayList<CommandHandler> existing = COMMANDS.get(commandListener);
+        if (existing == null) {
+            existing = new ArrayList<>();
+        }
+        existing.addAll(registrationQueue);
+        COMMANDS.put(commandListener, existing);
+
+        ArrayList<String> existingNames = COMMAND_NAMES.get(commandListener);
+        if (existingNames == null) {
+            existingNames = new ArrayList<>();
+        }
+        for (CommandHandler commandHandler : registrationQueue) {
+            existingNames.add(commandHandler.getCommandName());
+        }
+        COMMAND_NAMES.put(commandListener, existingNames);
+
+        if (getRegistry() != null) {
+            getRegistry().register(registrationQueue);
+        }
     }
 
     private CommandHandler buildNestedCommand(CommandListener handlerOrigin, CommandListener registerTo, final String parentPrefix, Method methodOrigin, final Command command, final String... parentAliases) {

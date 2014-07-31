@@ -37,7 +37,7 @@ import java.util.List;
 public class CommandRegistry {
 
     protected static Field SERVER_COMMAND_MAP;
-    private ArrayList<String> REGISTERED_COMMANDS = new ArrayList<>();
+    private final ArrayList<String> REGISTERED_COMMANDS = new ArrayList<>();
 
     static {
         Bukkit.getHelpMap().registerHelpTopicFactory(DynamicPluginCommand.class, new DynamicPluginCommandHelpTopicFactory());
