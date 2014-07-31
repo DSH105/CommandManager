@@ -17,7 +17,6 @@
 
 package com.dsh105.command;
 
-import com.dsh105.command.*;
 import org.bukkit.entity.Player;
 import org.junit.Assert;
 

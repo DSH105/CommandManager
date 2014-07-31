@@ -17,7 +17,9 @@
 
 package com.dsh105.command.registration;
 
-import com.dsh105.command.*;
+import com.dsh105.command.CommandHandler;
+import com.dsh105.command.CommandManager;
+import com.dsh105.command.MatchedCommand;
 import com.dsh105.commodus.StringUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -49,9 +51,9 @@ public class DynamicPluginCommandHelpTopic extends HelpTopic {
             MatchedCommand matchedCommand = ((CommandManager) command.getRegisteredWith()).matchCommand(name.substring(1));
             if (matchedCommand != null) {
                 CommandHandler commandHandler = matchedCommand.getCommandHandler();
-               description =  commandHandler.getCommand().description();
-               usage =  commandHandler.getCommand().usage();
-               aliases =  Arrays.asList(commandHandler.getCommand().aliases());
+                description = commandHandler.getCommand().description();
+                usage = commandHandler.getCommand().usage();
+                aliases = Arrays.asList(commandHandler.getCommand().aliases());
             }
         }
 

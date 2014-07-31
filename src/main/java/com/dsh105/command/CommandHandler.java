@@ -82,8 +82,8 @@ public class CommandHandler implements Comparable<CommandHandler> {
         if (!accessor.equals(that.accessor)) return false;
         if (!command.equals(that.command)) return false;
         if (!parent.equals(that.parent)) return false;
-        return registeredTo.equals(that.registeredTo);
 
+        return registeredTo.equals(that.registeredTo);
     }
 
     @Override

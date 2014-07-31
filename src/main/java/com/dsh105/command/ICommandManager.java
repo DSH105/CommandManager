@@ -23,8 +23,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 

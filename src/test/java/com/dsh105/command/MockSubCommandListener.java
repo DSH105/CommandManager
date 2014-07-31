@@ -17,11 +17,6 @@
 
 package com.dsh105.command;
 
-import com.dsh105.command.Command;
-import com.dsh105.command.CommandEvent;
-import com.dsh105.command.CommandListener;
-import com.dsh105.command.NestedCommand;
-
 public class MockSubCommandListener implements CommandListener {
 
     @NestedCommand

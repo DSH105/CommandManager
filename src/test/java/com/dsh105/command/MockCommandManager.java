@@ -17,8 +17,6 @@
 
 package com.dsh105.command;
 
-import com.dsh105.command.HelpService;
-import com.dsh105.command.SimpleCommandManager;
 import com.dsh105.command.registration.CommandRegistry;
 import org.bukkit.plugin.Plugin;
 

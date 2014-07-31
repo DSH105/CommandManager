@@ -161,7 +161,8 @@ public class HelpService {
                         String perm = matcher.group(3);
                         if (perm != null && !perm.isEmpty()) {
                             String[] permissions = perm.split(", ");
-                            tooltip: {
+                            tooltip:
+                            {
                                 boolean access = true;
                                 for (String permission : permissions) {
                                     if (!VariableMatcher.containsVariables(permission) && permissions.length == 1) {
