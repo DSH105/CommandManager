@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Thanks @CaptainBern <3
+ * Thanks CaptainBern <3
  */
 public class CommandRegistry {
 
