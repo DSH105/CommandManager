@@ -17,24 +17,21 @@
 
 package com.dsh105.command;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class MatchedCommand {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface Command {
+    private String matchedLabel;
+    private CommandHandler commandHandler;
 
-    String command();
+    protected MatchedCommand(String matchedLabel, CommandHandler commandHandler) {
+        this.matchedLabel = matchedLabel;
+        this.commandHandler = commandHandler;
+    }
 
-    String description();
+    public String getMatchedLabel() {
+        return matchedLabel;
+    }
 
-    String[] permission() default "";
-
-    String[] aliases() default {};
-
-    String[] help() default {};
-
-    String usage() default CommandManager.DEFAULT_USAGE;
+    public CommandHandler getCommandHandler() {
+        return commandHandler;
+    }
 }

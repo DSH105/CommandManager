@@ -17,7 +17,10 @@
 
 package com.dsh105.command;
 
+import com.dsh105.command.exception.InvalidCommandException;
+
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class Variable {
 
@@ -39,7 +42,11 @@ public class Variable {
         this.range = range;
 
         if (!this.regex.isEmpty()) {
-            pattern = Pattern.compile(this.regex);
+            try {
+                pattern = Pattern.compile(this.regex);
+            } catch (PatternSyntaxException e) {
+                throw new InvalidCommandException("Invalid pattern syntax for command (" + fullName + "): " + regex, e);
+            }
         }
     }
 

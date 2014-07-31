@@ -28,12 +28,12 @@ import static org.mockito.Mockito.when;
 
 public class CommandManagerTest {
 
-    private static CommandManager COMMAND_MANAGER;
+    private static MockCommandManager COMMAND_MANAGER;
     private static Plugin MOCKED_PLUGIN;
 
-    public static CommandManager getCommandManager() {
+    public static MockCommandManager getCommandManager() {
         if (COMMAND_MANAGER == null) {
-            COMMAND_MANAGER = new CommandManager(getMockedPlugin(), null, false, "[CommandTest]");
+            COMMAND_MANAGER = new MockCommandManager(getMockedPlugin());
         }
         return COMMAND_MANAGER;
     }
@@ -50,9 +50,8 @@ public class CommandManagerTest {
     public void testCommands() {
         CommandListener parent = new MockCommandListener();
         getCommandManager().register(parent);
-        getCommandManager().registerSubCommands(parent, MockSubCommandListener.class);
 
-        System.out.println("Registered commands: " + StringUtil.combineArray(0, ", ", getCommandManager().getRegisteredCommandNames().toArray(StringUtil.EMPTY_STRING_ARRAY)));
+        System.out.println("Registered commands: " + StringUtil.combineArray(0, ", ", getCommandManager().getAllRegisteredCommandNames().toArray(StringUtil.EMPTY_STRING_ARRAY)));
 
         for (String command : new String[]{"parent", "parent test", "something wow", "v wow", "variable", "extra command length woo", "parent sub"}) {
             System.out.println("Testing command: \"" + command + "\"");

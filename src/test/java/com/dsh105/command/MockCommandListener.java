@@ -17,6 +17,7 @@
 
 package com.dsh105.command;
 
+import com.dsh105.command.*;
 import org.bukkit.entity.Player;
 import org.junit.Assert;
 
@@ -32,7 +33,7 @@ public class MockCommandListener implements CommandListener {
         return true;
     }
 
-    @SubCommand
+    @NestedCommand
     @Command(
             command = "test",
             description = "Test sub command"

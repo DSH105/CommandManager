@@ -22,15 +22,15 @@ import org.bukkit.command.CommandSender;
 
 public class MockCommandEvent<T extends CommandSender> extends CommandEvent<T> {
 
-    public MockCommandEvent(CommandManager manager, String args, T sender) {
+    public MockCommandEvent(MockCommandManager manager, String args, T sender) {
         super(manager, args, sender);
     }
 
-    public MockCommandEvent(CommandManager manager, T sender, String... args) {
+    public MockCommandEvent(MockCommandManager manager, T sender, String... args) {
         super(manager, sender, args);
     }
 
-    public MockCommandEvent(CommandManager manager, String command, T sender, String... args) {
+    public MockCommandEvent(MockCommandManager manager, String command, T sender, String... args) {
         super(manager, command, sender, args);
     }
 

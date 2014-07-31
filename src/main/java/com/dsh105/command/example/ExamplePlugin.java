@@ -21,6 +21,7 @@ import com.dsh105.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+// TODO: improve this
 public class ExamplePlugin extends JavaPlugin {
 
     protected ICommandManager PRETEND_MANAGER;
@@ -57,7 +58,7 @@ public class ExamplePlugin extends JavaPlugin {
             return true;
         }
 
-        @SubCommand
+        @NestedCommand
         @Command(
                 command = "help",
                 description = "An example help command"
@@ -105,7 +106,7 @@ public class ExamplePlugin extends JavaPlugin {
 
             public ExampleTwoCommand(ExampleCommand exampleCommand) {
                 // Register all valid sub commands in this class to the parent
-                PRETEND_MANAGER.registerSubCommands(exampleCommand, this);
+                PRETEND_MANAGER.nestCommandsIn(this, exampleCommand);
             }
 
             // This command is registered as "example two" - the power of sub commands!

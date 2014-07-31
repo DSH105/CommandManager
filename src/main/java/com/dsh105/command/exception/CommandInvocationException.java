@@ -17,7 +17,7 @@
 
 package com.dsh105.command.exception;
 
-public class CommandInvocationException extends RuntimeException {
+public class CommandInvocationException extends CommandException {
 
     public CommandInvocationException() {
     }

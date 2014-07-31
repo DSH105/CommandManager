@@ -15,22 +15,26 @@
  * along with CommandManager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.dsh105.command.exception;
+package com.dsh105.command;
 
-public class CommandInvalidException extends RuntimeException {
+import com.dsh105.command.HelpService;
+import com.dsh105.command.SimpleCommandManager;
+import com.dsh105.command.registration.CommandRegistry;
+import org.bukkit.plugin.Plugin;
 
-    public CommandInvalidException() {
+public class MockCommandManager extends SimpleCommandManager {
+
+    public MockCommandManager(Plugin owningPlugin) {
+        super(owningPlugin, "[CommandTest]");
     }
 
-    public CommandInvalidException(String s) {
-        super(s);
+    @Override
+    public HelpService getHelpService() {
+        return null;
     }
 
-    public CommandInvalidException(String s, Throwable throwable) {
-        super(s, throwable);
-    }
-
-    public CommandInvalidException(Throwable throwable) {
-        super(throwable);
+    @Override
+    public CommandRegistry getRegistry() {
+        return null;
     }
 }

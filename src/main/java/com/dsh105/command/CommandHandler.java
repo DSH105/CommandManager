@@ -17,22 +17,34 @@
 
 package com.dsh105.command;
 
+import org.bukkit.command.CommandSender;
+
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
-public class CommandMethod implements Comparable<CommandMethod> {
+public class CommandHandler implements Comparable<CommandHandler> {
 
+    private CommandListener parent;
+    private CommandListener registeredTo;
     private Command command;
     private Method accessor;
-    private CommandListener parent;
+    private Class<?> acceptedSenderType;
 
-    public CommandMethod(CommandListener parent, Command command, Method accessor) {
-        this.parent = parent;
+    public CommandHandler(CommandListener parentListener, CommandListener registeredTo, Command command, Method accessor) {
+        this.parent = parentListener;
+        this.registeredTo = registeredTo;
         this.command = command;
         this.accessor = accessor;
+        this.acceptedSenderType = getSenderType();
     }
 
     public CommandListener getParent() {
         return parent;
+    }
+
+    public CommandListener getRegisteredTo() {
+        return registeredTo;
     }
 
     public Command getCommand() {
@@ -43,10 +55,26 @@ public class CommandMethod implements Comparable<CommandMethod> {
         return accessor;
     }
 
+    public Class<?> getAcceptedSenderType() {
+        return acceptedSenderType;
+    }
+
+    public boolean isSenderAccepted(CommandSender sender) {
+        return getAcceptedSenderType().isAssignableFrom(sender.getClass());
+    }
+
+    public Command getParentCommand() {
+        return getRegisteredTo().getClass().getAnnotation(Command.class);
+    }
+
+    public String getCommandName() {
+        return getCommand().command();
+    }
+
     @Override
-    public int compareTo(CommandMethod commandMethod) {
-        String command = getCommand().command();
-        String commandToCompare = commandMethod.getCommand().command();
+    public int compareTo(CommandHandler handler) {
+        String command = getCommandName();
+        String commandToCompare = handler.getCommandName();
 
         if (!VariableMatcher.containsVariables(command) && VariableMatcher.containsVariables(commandToCompare)) {
             return 1;
@@ -63,5 +91,21 @@ public class CommandMethod implements Comparable<CommandMethod> {
 
         // Compare lengths - longer commands get priority as they are harder to find matches for
         return command.length() - commandToCompare.length();
+    }
+
+    private Class<?> getSenderType() {
+        Type[] genericParameterTypes = getAccessor().getGenericParameterTypes();
+        for (Type genericType : genericParameterTypes) {
+            if (genericType instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType) genericType;
+                Type[] paramArgTypes = parameterizedType.getActualTypeArguments();
+                for (Type paramArgType : paramArgTypes) {
+                    if (paramArgType != null) {
+                        return (Class<?>) paramArgType;
+                    }
+                }
+            }
+        }
+        return CommandSender.class;
     }
 }

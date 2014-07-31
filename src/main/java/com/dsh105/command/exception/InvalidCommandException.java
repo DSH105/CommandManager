@@ -15,26 +15,22 @@
  * along with CommandManager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.dsh105.command;
+package com.dsh105.command.exception;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class InvalidCommandException extends CommandException {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface Command {
+    public InvalidCommandException() {
+    }
 
-    String command();
+    public InvalidCommandException(String s) {
+        super(s);
+    }
 
-    String description();
+    public InvalidCommandException(String s, Throwable throwable) {
+        super(s, throwable);
+    }
 
-    String[] permission() default "";
-
-    String[] aliases() default {};
-
-    String[] help() default {};
-
-    String usage() default CommandManager.DEFAULT_USAGE;
+    public InvalidCommandException(Throwable throwable) {
+        super(throwable);
+    }
 }

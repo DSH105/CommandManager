@@ -17,14 +17,17 @@
 
 package com.dsh105.command.registration;
 
+import com.dsh105.command.Command;
+import com.dsh105.command.CommandHandler;
+import com.dsh105.command.ICommandManager;
+import com.dsh105.commodus.StringUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
-import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,12 +50,11 @@ public class CommandRegistry {
         }
     }
 
+    private ICommandManager manager;
     private CommandMap fallback;
 
-    private final Plugin plugin;
-
-    public CommandRegistry(Plugin plugin) {
-        this.plugin = plugin;
+    public CommandRegistry(ICommandManager manager) {
+        this.manager = manager;
     }
 
     public CommandMap getCommandMap() {
@@ -61,7 +63,7 @@ public class CommandRegistry {
         try {
             map = (CommandMap) SERVER_COMMAND_MAP.get(Bukkit.getPluginManager());
         } catch (Exception e) {
-            plugin.getLogger().warning("Failed to retrieve the CommandMap! Using fallback instead...");
+            manager.getPlugin().getLogger().warning("Failed to retrieve the CommandMap! Using fallback instead...");
             map = null;
         }
 
@@ -70,10 +72,26 @@ public class CommandRegistry {
                 return fallback;
             } else {
                 fallback = map = new SimpleCommandMap(Bukkit.getServer());
-                Bukkit.getPluginManager().registerEvents(new FallbackCommandRegistrationListener(fallback), this.plugin);
+                Bukkit.getPluginManager().registerEvents(new FallbackCommandRegistrationListener(fallback), manager.getPlugin());
             }
         }
         return map;
+    }
+
+    public void register(Collection<CommandHandler> registrationQueue) {
+        if (!registrationQueue.isEmpty()) {
+            for (CommandHandler handler : registrationQueue) {
+                Command command = handler.getCommand();
+
+                // Build a list of aliases that Bukkit can use
+                List<String> aliases = new ArrayList<>();
+                for (String alias : command.aliases()) {
+                    aliases.add(alias.split("\\s")[0]);
+                }
+
+                register(new DynamicPluginCommand(handler.getCommandName().split("\\s")[0], aliases.toArray(StringUtil.EMPTY_STRING_ARRAY), manager.getMessenger().format(command.description()), manager.getMessenger().format(command.usage()), manager, manager.getPlugin()));
+            }
+        }
     }
 
     public void register(DynamicPluginCommand command) {
@@ -81,7 +99,7 @@ public class CommandRegistry {
             // Already registered with CommandManager -> no need to do so again
             return;
         }
-        if (!getCommandMap().register(this.plugin.getName(), command)) {
+        if (!getCommandMap().register(manager.getPlugin().getName(), command)) {
             // More of a backup for above
             unregister(command);
         } else {
@@ -95,7 +113,7 @@ public class CommandRegistry {
     }
 
     public void unregister(String command) {
-        Command bukkitCommand = getCommandMap().getCommand(command);
+        org.bukkit.command.Command bukkitCommand = getCommandMap().getCommand(command);
         if (bukkitCommand != null && bukkitCommand instanceof DynamicPluginCommand) {
             unregister((DynamicPluginCommand) bukkitCommand);
         }

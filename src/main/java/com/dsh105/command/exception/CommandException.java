@@ -15,15 +15,22 @@
  * along with CommandManager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.dsh105.command;
+package com.dsh105.command.exception;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class CommandException extends RuntimeException {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface SubCommand {
+    public CommandException() {
+    }
 
+    public CommandException(String s) {
+        super(s);
+    }
+
+    public CommandException(String s, Throwable throwable) {
+        super(s, throwable);
+    }
+
+    public CommandException(Throwable throwable) {
+        super(throwable);
+    }
 }

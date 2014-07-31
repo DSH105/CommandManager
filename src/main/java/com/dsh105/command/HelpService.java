@@ -24,7 +24,6 @@ import com.dsh105.powermessage.markup.MarkupBuilder;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.ChatPaginator;
 
 import java.util.ArrayList;
@@ -35,8 +34,8 @@ import java.util.regex.Pattern;
 
 public class HelpService {
 
-    private String PAGE_NOT_FOUND = "Page %s does not exist";
-    private String PAGE_HEADER;
+    private String pageNotFoundMessage = "Page %s does not exist";
+    private String pageHeader;
 
     private ICommandManager manager;
     private Paginator<PowerMessage> paginator = new Paginator<>(6);
@@ -46,49 +45,50 @@ public class HelpService {
 
     public HelpService(ICommandManager manager) {
         this.manager = manager;
-
-        PAGE_HEADER = buildHeader();
+        this.pageHeader = buildHeader();
     }
 
     private String buildHeader() {
         StringBuilder header = new StringBuilder();
-        header.append(ChatColor.YELLOW);
-        header.append("------ ");
-        header.append(ChatColor.WHITE);
-        header.append("Help: ");
-        header.append(manager.getPlugin().getName());
-        header.append(" ");
-        header.append("Page ");
-        header.append(ChatColor.RED);
-        header.append("{pages} ");
-        header.append(ChatColor.GOLD);
-        header.append("/ ");
-        header.append(ChatColor.RED);
-        header.append("{total} ");
-        header.append(ChatColor.YELLOW);
+        header.append(ChatColor.YELLOW)
+              .append("------ ")
+              .append(ChatColor.WHITE)
+              .append("Help: ")
+              .append(manager.getPlugin().getName())
+              .append(" ")
+              .append("Page ")
+              .append(ChatColor.RED)
+              .append("{pages} ")
+              .append(ChatColor.GOLD)
+              .append("/ ")
+              .append(ChatColor.RED)
+              .append("{total} ")
+              .append(ChatColor.YELLOW);
         for (int i = header.length(); i < ChatPaginator.AVERAGE_CHAT_PAGE_WIDTH; i++) {
             header.append("-");
         }
         return header.toString();
     }
 
-    private void prepare(CommandMethod commandMethod) {
-        String command = commandMethod.getCommand().command().replaceAll("(?:r:(?:(?:(?!,n:.+)[^>\\]])+))[^,>|\\]]*", "").replaceAll(",n:", "").replace("<>", "<undefined>");
-        String permission = StringUtil.combineArray(", ", commandMethod.getCommand().permission()).trim();
+    private void prepare(CommandHandler commandHandler) {
+        String command = commandHandler.getCommandName().replaceAll("(?:r:(?:(?:(?!,n:.+)[^>\\]])+))[^,>|\\]]*", "").replaceAll(",n:", "").replace("<>", "<undefined>");
+        String permission = StringUtil.combineArray(", ", commandHandler.getCommand().permission()).trim();
+
         PowerMessage part = new MarkupBuilder()
-                .withText(manager.getHighlightColour().toString())
+                .withText(manager.getMessenger().getHighlightColour().toString())
                 .withText("/")
                 .withText(command)
-                .withText(manager.getFormatColour().toString())
+                .withText(manager.getMessenger().getFormatColour().toString())
                 .withText(" - ")
-                .withText(commandMethod.getCommand().description())
+                .withText(commandHandler.getCommand().description())
                 .withText(permission.isEmpty() ? "" : " (" + permission + ")")
                 .build();
         part.suggest("/" + command);
-        if (commandMethod.getCommand().help().length > 0) {
+
+        if (commandHandler.getCommand().help().length > 0) {
             ArrayList<String> tooltipLines = new ArrayList<>();
-            for (String help : commandMethod.getCommand().help()) {
-                tooltipLines.add(new MarkupBuilder().withText(manager.getHighlightColour() + "• " + manager.getFormatColour() + WordUtils.wrap(help, 30, "\n", false)).build().getContent());
+            for (String help : commandHandler.getCommand().help()) {
+                tooltipLines.add(new MarkupBuilder().withText(manager.getMessenger().getHighlightColour() + "• " + manager.getMessenger().getFormatColour() + WordUtils.wrap(help, 30, "\n", false)).build().getContent());
             }
             if (!tooltipLines.isEmpty()) {
                 part.tooltip(tooltipLines.toArray(StringUtil.EMPTY_STRING_ARRAY));
@@ -106,11 +106,11 @@ public class HelpService {
     }
 
     public String getPageNotFoundMessage() {
-        return PAGE_NOT_FOUND;
+        return pageNotFoundMessage;
     }
 
     public void setPageNotFoundMessage(String value) {
-        this.PAGE_NOT_FOUND = value;
+        this.pageNotFoundMessage = value;
     }
 
     public boolean willIncludePermissionTooltip() {
@@ -139,10 +139,8 @@ public class HelpService {
 
     public void prepare() {
         paginator.clear();
-        for (CommandListener commandListener : manager.getRegisteredCommands()) {
-            for (CommandMethod commandMethod : manager.getCommandMethods(commandListener)) {
-                prepare(commandMethod);
-            }
+        for (CommandHandler commandHandler : manager.getAllRegisteredCommands()) {
+            prepare(commandHandler);
         }
     }
 
@@ -163,8 +161,7 @@ public class HelpService {
                         String perm = matcher.group(3);
                         if (perm != null && !perm.isEmpty()) {
                             String[] permissions = perm.split(", ");
-                            tooltip:
-                            {
+                            tooltip: {
                                 boolean access = true;
                                 for (String permission : permissions) {
                                     if (!VariableMatcher.containsVariables(permission) && permissions.length == 1) {
@@ -187,7 +184,7 @@ public class HelpService {
             p = new Paginator<>(paginator.getPerPage(), messages.toArray(new PowerMessage[0]));
         }
 
-        String pageHeader = PAGE_HEADER.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages());
+        String pageHeader = this.pageHeader.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages());
 
         if (!p.exists(pageNumber)) {
             new MarkupBuilder().withText((manager.getResponsePrefix() != null && !manager.getResponsePrefix().isEmpty() ? manager.getResponsePrefix() + " " : "") + ChatColor.RESET + String.format(getPageNotFoundMessage(), "" + pageNumber)).build().send(sender);

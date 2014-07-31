@@ -17,13 +17,29 @@
 
 package com.dsh105.command;
 
+import com.dsh105.command.Command;
+import com.dsh105.command.CommandEvent;
+import com.dsh105.command.CommandListener;
+import com.dsh105.command.NestedCommand;
+
 public class MockSubCommandListener implements CommandListener {
 
+    @NestedCommand
     @Command(
             command = "sub",
             description = "Test command"
     )
-    public boolean infoCommand(CommandEvent event) {
+    public boolean subCommand(CommandEvent event) {
+        event.respond("\"" + event.input() + "\" sub command fired.");
+        return true;
+    }
+
+    @NestedCommand(parentCommand = "another")
+    @Command(
+            command = "sub",
+            description = "Test command"
+    )
+    public boolean anotherSubCommand(CommandEvent event) {
         event.respond("\"" + event.input() + "\" sub command fired.");
         return true;
     }
