@@ -102,7 +102,7 @@ public class CommandEvent<T extends CommandSender> {
 
     public boolean canPerform(String... permissions) {
         for (String permission : permissions) {
-            if (!sender.hasPermission(permission)) {
+            if (!permission.isEmpty() && !sender.hasPermission(permission)) {
                 respond(ResponseLevel.SEVERE, manager.getMessenger().getNoPermissionMessage() + (VariableMatcher.containsVariables(permission) ? " Or maybe a variable was invalid?" : ""));
                 return false;
             }
