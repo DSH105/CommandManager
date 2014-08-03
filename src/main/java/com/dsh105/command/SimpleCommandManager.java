@@ -196,7 +196,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
      */
 
     @Override
-    public void nestCommandsInregister(CommandListener commandListener) {
+    public void register(CommandListener commandListener) {
         if (LISTENERS.contains(commandListener)) {
             throw new CommandRegistrationException("CommandListener already registered!");
         }
