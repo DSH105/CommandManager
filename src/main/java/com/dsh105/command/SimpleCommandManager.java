@@ -250,8 +250,10 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
 
         // Retrieve the prefix for this nested command
         Command commandParent = destination.getClass().getAnnotation(Command.class);
-        String prefix = commandParent == null ? "" : commandParent.command() + " ";
+        String parentPrefix = commandParent == null ? "" : commandParent.command() + " ";
         for (Method method : origin.getClass().getDeclaredMethods()) {
+            String prefix = parentPrefix;
+            
             Command command = method.getAnnotation(Command.class);
             if (command != null) {
                 ensureValidity(origin, method);
