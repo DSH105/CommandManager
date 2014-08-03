@@ -25,13 +25,14 @@ import java.util.regex.Pattern;
 
 public class VariableMatcher {
 
-    protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(>|\\])", Pattern.CASE_INSENSITIVE);
     protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(?:r:((?:(?!,n:.+)[^>\\]])+))(?:,n:([^>\\]]+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private String command;
     private String eventInput;
 
     private String syntaxPattern;
+    private String humanReadableSyntax;
     private List<String> arguments;
     private ArrayList<Variable> variables;
     private HashMap<Variable, String> matchedArguments;
@@ -47,6 +48,7 @@ public class VariableMatcher {
             variables = new ArrayList<>();
         }
         String syntaxPattern = command;
+        String humanReadableSyntax = command;
 
         Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
 
@@ -72,11 +74,13 @@ public class VariableMatcher {
              * Varargs style arguments can match anything, including spaces
              */
             syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), ((syntaxMatcher.group(2).endsWith("...") ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : "")));
+            humanReadableSyntax = humanReadableSyntax.replace(syntaxMatcher.group(0), syntaxMatcher.group(1) + variable.getName() + syntaxMatcher.group(3));
 
             variables.add(variable);
         }
 
         this.syntaxPattern = syntaxPattern;
+        this.humanReadableSyntax = humanReadableSyntax;
         return syntaxPattern;
     }
 
@@ -85,6 +89,10 @@ public class VariableMatcher {
             buildVariableSyntax();
         }
         return Pattern.compile("\\b" + syntaxPattern + "\\b", Pattern.CASE_INSENSITIVE).matcher(eventInput).matches();
+    }
+
+    public String getHumanReadableSyntax() {
+        return humanReadableSyntax;
     }
 
     public List<Variable> getVariables() {

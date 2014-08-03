@@ -39,7 +39,8 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
 
     private String responsePrefix;
     private boolean suggestCommands;
-    private boolean showErrorMessage;
+    private boolean showErrorMessage = true;
+    private boolean showDefaultUsageAsCommandSyntax;
 
     /**
      * List of all registered listeners
@@ -175,6 +176,14 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
         return showErrorMessage;
     }
 
+    public boolean willShowDefaultUsageAsCommandSyntax() {
+        return showDefaultUsageAsCommandSyntax;
+    }
+
+    public void setShowDefaultUsageAsCommandSyntax(boolean showDefaultUsageAsCommandSyntax) {
+        this.showDefaultUsageAsCommandSyntax = showDefaultUsageAsCommandSyntax;
+    }
+
     @Override
     public void refreshHelp() {
         if (getHelpService() != null) {
@@ -187,7 +196,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
      */
 
     @Override
-    public void register(CommandListener commandListener) {
+    public void nestCommandsInregister(CommandListener commandListener) {
         if (LISTENERS.contains(commandListener)) {
             throw new CommandRegistrationException("CommandListener already registered!");
         }
@@ -360,7 +369,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
             }
 
             @Override
-            public String usage() {
+            public String[] usage() {
                 return command.usage();
             }
 
@@ -426,13 +435,21 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
                     boolean executionResult = (boolean) handler.getAccessor().invoke(handler.getParent(), event);
                     if (!executionResult) {
                         // The handler didn't accept this command - deal with sending usage info
-                        String usage;
-                        if (command.usage().equals(DEFAULT_USAGE)) {
-                            usage = parent == null ? DEFAULT_USAGE : parent.usage();
+                        if (willShowDefaultUsageAsCommandSyntax()) {
+                            // Show the command syntax
+                            event.respond(ResponseLevel.SEVERE, event.getVariableMatcher().getHumanReadableSyntax());
                         } else {
-                            usage = command.usage();
+                            String[] usage;
+                            String[] def = {DEFAULT_USAGE};
+                            if (Arrays.equals(command.usage(), def)) {
+                                usage = parent == null ? def : parent.usage();
+                            } else {
+                                usage = command.usage();
+                            }
+                            for (String part : usage) {
+                                event.respond(part);
+                            }
                         }
-                        event.respond(usage);
                     }
                 } catch (Exception e) {
                     if (shouldShowErrorMessage()) {
