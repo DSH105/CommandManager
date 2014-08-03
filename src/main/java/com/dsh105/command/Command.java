@@ -36,5 +36,5 @@ public @interface Command {
 
     String[] help() default {};
 
-    String usage() default CommandManager.DEFAULT_USAGE;
+    String[] usage() default CommandManager.DEFAULT_USAGE;
 }
