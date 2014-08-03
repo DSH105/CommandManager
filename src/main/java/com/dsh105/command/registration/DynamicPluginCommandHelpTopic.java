@@ -52,7 +52,7 @@ public class DynamicPluginCommandHelpTopic extends HelpTopic {
             if (matchedCommand != null) {
                 CommandHandler commandHandler = matchedCommand.getCommandHandler();
                 description = commandHandler.getCommand().description();
-                usage = commandHandler.getCommand().usage();
+                usage = commandHandler.getCommand().usage()[0];
                 aliases = Arrays.asList(commandHandler.getCommand().aliases());
             }
         }

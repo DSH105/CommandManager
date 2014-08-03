@@ -89,7 +89,7 @@ public class CommandRegistry {
                     aliases.add(alias.split("\\s")[0]);
                 }
 
-                register(new DynamicPluginCommand(handler.getCommandName().split("\\s")[0], aliases.toArray(StringUtil.EMPTY_STRING_ARRAY), manager.getMessenger().format(command.description()), manager.getMessenger().format(command.usage()), manager, manager.getPlugin()));
+                register(new DynamicPluginCommand(handler.getCommandName().split("\\s")[0], aliases.toArray(StringUtil.EMPTY_STRING_ARRAY), manager.getMessenger().format(command.description()), manager.getMessenger().format(command.usage()[0]), manager, manager.getPlugin()));
             }
         }
     }
