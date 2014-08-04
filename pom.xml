@@ -97,11 +97,13 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
     <!-- Build -->
     <build>
         <defaultGoal>clean test package install</defaultGoal>
         <finalName>${project.name}</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+
         <!-- Filter resources -->
         <resources>
             <resource>
@@ -114,13 +116,7 @@
                 </includes>
             </resource>
         </resources>
-        <extensions>
-            <extension>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-ftp</artifactId>
-                <version>2.5</version>
-            </extension>
-        </extensions>
+
         <!-- Plugins -->
         <plugins>
             <!-- Clean up-->
@@ -151,6 +147,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <!-- Compiler -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -160,6 +157,7 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
+
             <!-- Jar-Filler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -173,6 +171,7 @@
                     </archive>
                 </configuration>
             </plugin>
+
             <!-- Shade -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -197,9 +196,12 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- JavaDoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -209,6 +211,8 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Deploy -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
@@ -223,7 +227,17 @@
                 </executions>
             </plugin>
         </plugins>
+
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ftp</artifactId>
+                <version>2.5</version>
+            </extension>
+        </extensions>
     </build>
+
+    <!-- Distribution -->
     <distributionManagement>
         <repository>
             <id>dsh105-ftp</id>
