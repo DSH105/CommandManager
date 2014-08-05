@@ -62,7 +62,7 @@ public class VariableMatcher {
             if (regexMatcher.matches()) {
                 String regex = regexMatcher.group(1);
                 String name = regexMatcher.group(2);
-                variable = new Variable(syntaxMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range);
+                variable = new Variable(regexMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range);
             } else {
                 variable = new Variable(syntaxMatcher.group(0), syntaxMatcher.group(2).replace("...", ""), range);
             }
