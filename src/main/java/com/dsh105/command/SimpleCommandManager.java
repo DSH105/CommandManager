@@ -240,17 +240,18 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
     }
 
     @Override
-    public void nestCommandsIn(CommandListener origin, CommandListener destination) {
-        nestCommandsIn(origin, destination, true);
+    public void nestCommandsIn(CommandListener destination, CommandListener origin) {
+        nestCommandsIn(destination, origin, true);
     }
 
     @Override
-    public void nestCommandsIn(CommandListener origin, CommandListener destination, boolean includeAll) {
+    public void nestCommandsIn(CommandListener destination, CommandListener origin, boolean includeAll) {
         ArrayList<CommandHandler> registrationQueue = new ArrayList<>();
 
         // Retrieve the prefix for this nested command
         Command commandParent = destination.getClass().getAnnotation(Command.class);
         String parentPrefix = commandParent == null ? "" : commandParent.command() + " ";
+
         for (Method method : origin.getClass().getDeclaredMethods()) {
             String prefix = parentPrefix;
 
