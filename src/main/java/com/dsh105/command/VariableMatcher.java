@@ -60,6 +60,7 @@ public class VariableMatcher {
             String openingTag = regexMatcher.group(1);
             String regex = regexMatcher.group(2);
             String name = regexMatcher.group(3);
+            boolean continuous = fullName.endsWith("...");
 
             try {
                 Pattern.compile(regex);
@@ -68,9 +69,9 @@ public class VariableMatcher {
             }
 
             int startIndex = arguments.indexOf(fullName);
-            Range range = new Range(startIndex, name.endsWith("...") ? eventInput.length() - 1 : startIndex);
+            Range range = new Range(startIndex, continuous ? eventInput.length() - 1 : startIndex);
 
-            tempVariables.add(new Variable(fullName, regex, name == null ? regex : name.replace("...", ""), range, openingTag.equals("["), false));
+            tempVariables.add(new Variable(fullName, regex, name == null ? regex : name.replace("...", ""), range, openingTag.equals("["), continuous));
         }
 
         Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
