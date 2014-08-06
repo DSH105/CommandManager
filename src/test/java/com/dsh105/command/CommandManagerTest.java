@@ -55,10 +55,14 @@ public class CommandManagerTest {
 
         for (String command : new String[]{"parent", "parent test", "something wow", "v wow", "variable", "extra command length woo", "parent sub"}) {
             System.out.println("Testing command: \"" + command + "\"");
-            getCommandManager().onCommand(new MockCommandEvent<>(getCommandManager(), command, mock(CommandSender.class)));
+            if (!getCommandManager().onCommand(new MockCommandEvent<>(getCommandManager(), command, mock(CommandSender.class)))) {
+                throw new IllegalStateException("Command did not fire correctly: \"" + command + "\". Investigate.");
+            }
 
             System.out.println("Testing command as Player: \"" + command + "\"");
-            getCommandManager().onCommand(new MockCommandEvent<>(getCommandManager(), command, mock(Player.class)));
+            if (!getCommandManager().onCommand(new MockCommandEvent<>(getCommandManager(), command, mock(Player.class)))) {
+                throw new IllegalStateException("Command did not fire correctly: \"" + command + "\". Investigate.");
+            }
         }
     }
 }
