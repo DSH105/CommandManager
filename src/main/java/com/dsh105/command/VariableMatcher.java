@@ -28,7 +28,7 @@ import java.util.regex.PatternSyntaxException;
 public class VariableMatcher {
 
     protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(>|\\])", Pattern.CASE_INSENSITIVE);
-    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)r:\"((?:.(?!,n:))+)\"(?:,n:(.+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(<|\\[)r:\"((?:.(?!,n:))+)\"(?:,n:(.+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private String command;
     private String eventInput;
@@ -56,27 +56,35 @@ public class VariableMatcher {
 
         Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(command);
         while (regexMatcher.find()) {
-            String regex = regexMatcher.group(1);
-            String name = regexMatcher.group(2);
+            String fullName = regexMatcher.group(0);
+            String openingTag = regexMatcher.group(1);
+            String regex = regexMatcher.group(2);
+            String name = regexMatcher.group(3);
 
             try {
                 Pattern.compile(regex);
             } catch (PatternSyntaxException e) {
-                throw new InvalidCommandException("Invalid pattern syntax for command \"" + command + "\". Variable (\"" + regexMatcher.group(0) + "\") has invalid regex: \"" + regex + "\"", e);
+                throw new InvalidCommandException("Invalid pattern syntax for command \"" + command + "\". Variable (\"" + fullName + "\") has invalid regex: \"" + regex + "\"", e);
             }
 
-            int startIndex = arguments.indexOf(regexMatcher.group(0));
+            int startIndex = arguments.indexOf(fullName);
             Range range = new Range(startIndex, name.endsWith("...") ? eventInput.length() - 1 : startIndex);
 
-            tempVariables.add(new Variable(regexMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range));
+            tempVariables.add(new Variable(fullName, regex, name == null ? regex : name.replace("...", ""), range, openingTag.equals("["), false));
         }
 
         Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
 
         while (syntaxMatcher.find()) {
+            String openingTag = syntaxMatcher.group(1);
+            String name = syntaxMatcher.group(2);
+            boolean continuous = name.endsWith("...");
+            boolean optional = openingTag.equals("[");
+
             int startIndex = arguments.indexOf(syntaxMatcher.group(0));
-            Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
-            Variable variable = new Variable(syntaxMatcher.group(0), syntaxMatcher.group(2).replace("...", ""), range);
+            Range range = new Range(startIndex, continuous ? eventInput.length() - 1 : startIndex);
+
+            Variable variable = new Variable(syntaxMatcher.group(0), name.replace("...", ""), range, optional, continuous);
             if (!tempVariables.contains(variable)) {
                 tempVariables.add(variable);
             }
@@ -89,8 +97,9 @@ public class VariableMatcher {
              * Optional args can match something or nothing
              * Varargs style arguments can match anything, including spaces
              */
-            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), ((syntaxMatcher.group(2).endsWith("...") ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : "")));
-            humanReadableSyntax = humanReadableSyntax.replace(syntaxMatcher.group(0), syntaxMatcher.group(1) + variable.getName() + syntaxMatcher.group(3));
+
+            syntaxPattern = syntaxPattern.replace(variable.getFullName(), ((variable.isContinuous() ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)") + (variable.isOptional() ? "?" : "")));
+            humanReadableSyntax = humanReadableSyntax.replace(variable.getFullName(), variable.getOpeningTag() + variable.getName() + (variable.isContinuous() ? "..." : "") + variable.getClosingTag());
 
             variables.add(variable);
         }

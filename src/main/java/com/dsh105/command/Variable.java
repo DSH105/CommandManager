@@ -30,16 +30,20 @@ public class Variable implements Comparable<Variable> {
     private String regex;
     private String name;
     private Range range;
+    private boolean continuous;
+    private boolean optional;
 
-    public Variable(String fullName, String name, Range range) {
-        this(fullName, "", name, range);
+    public Variable(String fullName, String name, Range range, boolean optional, boolean continuous) {
+        this(fullName, "", name, range, optional, continuous);
     }
 
-    public Variable(String fullName, String regex, String name, Range range) {
+    public Variable(String fullName, String regex, String name, Range range, boolean optional, boolean continuous) {
         this.fullName = fullName;
         this.regex = regex;
         this.name = name;
         this.range = range;
+        this.optional = optional;
+        this.continuous = continuous;
 
         if (!this.regex.isEmpty()) {
             try {
@@ -68,6 +72,22 @@ public class Variable implements Comparable<Variable> {
 
     public Range getRange() {
         return range;
+    }
+
+    public boolean isContinuous() {
+        return continuous;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
+
+    public String getOpeningTag() {
+        return isOptional() ? "[" : "<";
+    }
+
+    public String getClosingTag() {
+        return isOptional() ? "]" : ">";
     }
 
     @Override
