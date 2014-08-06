@@ -28,7 +28,7 @@ import java.util.regex.PatternSyntaxException;
 public class VariableMatcher {
 
     protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(>|\\])", Pattern.CASE_INSENSITIVE);
-    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)r:\"((?:.(?!,n:))+)\"(?:,n:\"(.+)\")?(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)r:\"((?:.(?!,n:))+)\"(?:,n:(.+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private String command;
     private String eventInput;
