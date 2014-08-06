@@ -17,16 +17,18 @@
 
 package com.dsh105.command;
 
+import com.dsh105.command.exception.InvalidCommandException;
 import com.dsh105.commodus.StringUtil;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class VariableMatcher {
 
     protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(>|\\])", Pattern.CASE_INSENSITIVE);
-    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(?:r:((?:(?!,n:.+)[^>\\]])+))(?:,n:([^>\\]]+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)r:\"((?:.(?!,n:))+)\"(?:,n:\"(.+)\")?(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private String command;
     private String eventInput;
@@ -50,23 +52,37 @@ public class VariableMatcher {
         String syntaxPattern = command;
         String humanReadableSyntax = command;
 
-        Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
+        ArrayList<Variable> tempVariables = new ArrayList<>();
 
-        while (syntaxMatcher.find()) {
-            int startIndex = arguments.indexOf(syntaxMatcher.group(0));
+        Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(command);
+        while (regexMatcher.find()) {
+            String regex = regexMatcher.group(1);
+            String name = regexMatcher.group(2);
 
-            Variable variable;
-            Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
-
-            Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(syntaxMatcher.group(0));
-            if (regexMatcher.matches()) {
-                String regex = regexMatcher.group(1);
-                String name = regexMatcher.group(2);
-                variable = new Variable(regexMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range);
-            } else {
-                variable = new Variable(syntaxMatcher.group(0), syntaxMatcher.group(2).replace("...", ""), range);
+            try {
+                Pattern.compile(regex);
+            } catch (PatternSyntaxException e) {
+                throw new InvalidCommandException("Invalid pattern syntax for command \"" + command + "\". Variable (\"" + regexMatcher.group(0) + "\") has invalid regex: \"" + regex + "\"", e);
             }
 
+            int startIndex = arguments.indexOf(regexMatcher.group(0));
+            Range range = new Range(startIndex, name.endsWith("...") ? eventInput.length() - 1 : startIndex);
+
+            tempVariables.add(new Variable(regexMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range));
+        }
+
+        Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
+        int startIndex = arguments.indexOf(syntaxMatcher.group(0));
+        Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
+
+        while (syntaxMatcher.find()) {
+            Variable variable = new Variable(syntaxMatcher.group(0), syntaxMatcher.group(2).replace("...", ""), range);
+            if (!tempVariables.contains(variable)) {
+                tempVariables.add(variable);
+            }
+        }
+
+        for (Variable variable : tempVariables) {
             /*
              * Conditions:
              * If the regex exists, make use of it
@@ -78,6 +94,7 @@ public class VariableMatcher {
 
             variables.add(variable);
         }
+        Collections.sort(variables);
 
         this.syntaxPattern = syntaxPattern;
         this.humanReadableSyntax = humanReadableSyntax;

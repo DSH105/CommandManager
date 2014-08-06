@@ -34,4 +34,15 @@ public class Range {
     public int getEndIndex() {
         return endIndex;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Range range = (Range) o;
+
+        return endIndex == range.endIndex && startIndex == range.startIndex;
+
+    }
 }

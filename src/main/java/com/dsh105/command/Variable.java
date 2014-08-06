@@ -22,7 +22,7 @@ import com.dsh105.command.exception.InvalidCommandException;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class Variable {
+public class Variable implements Comparable<Variable> {
 
     private Pattern pattern;
 
@@ -45,7 +45,7 @@ public class Variable {
             try {
                 pattern = Pattern.compile(this.regex);
             } catch (PatternSyntaxException e) {
-                throw new InvalidCommandException("Invalid pattern syntax for command (" + fullName + "): " + regex, e);
+                throw new InvalidCommandException("Invalid pattern syntax for command variable (\"" + this.fullName + "\"): \"" + this.regex + "\"", e);
             }
         }
     }
@@ -68,5 +68,26 @@ public class Variable {
 
     public Range getRange() {
         return range;
+    }
+
+    @Override
+    public int compareTo(Variable variable) {
+        return variable.getRange().getStartIndex() - this.getRange().getStartIndex();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Variable variable = (Variable) o;
+
+        if (!fullName.equals(variable.fullName)) return false;
+        if (!regex.equals(variable.regex)) return false;
+        if (!name.equals(variable.name)) return false;
+        if (!range.equals(variable.range)) return false;
+        if (pattern != null ? !pattern.equals(variable.pattern) : variable.pattern != null) return false;
+
+        return true;
     }
 }

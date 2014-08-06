@@ -306,7 +306,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
         if (LISTENERS.contains(commandListener)) {
             LISTENERS.add(commandListener);
         }
-        
+
         Set<CommandHandler> existing = COMMANDS.get(commandListener);
         if (existing == null) {
             existing = new HashSet<>();
