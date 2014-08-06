@@ -72,10 +72,10 @@ public class VariableMatcher {
         }
 
         Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
-        int startIndex = arguments.indexOf(syntaxMatcher.group(0));
-        Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
 
         while (syntaxMatcher.find()) {
+            int startIndex = arguments.indexOf(syntaxMatcher.group(0));
+            Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
             Variable variable = new Variable(syntaxMatcher.group(0), syntaxMatcher.group(2).replace("...", ""), range);
             if (!tempVariables.contains(variable)) {
                 tempVariables.add(variable);
