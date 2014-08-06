@@ -40,7 +40,8 @@ public class VariableMatcherTest {
         Assert.assertTrue(variableMatcher.testRegexVariables());
 
         for (Variable variable : variableMatcher.getVariables()) {
-            Assert.assertEquals(variable.getName(), commandSyntax[variable.getRange().getStartIndex()].replaceAll("r:|<|>|\\[|\\]", ""));
+            System.out.println(variable.getName());
+            Assert.assertEquals(variable.getName(), commandSyntax[variable.getRange().getStartIndex()].replaceAll("r:|\"|<|>|\\[|\\]", ""));
         }
 
         for (Map.Entry<Variable, String> entry : variableMatcher.getMatchedArguments().entrySet()) {
