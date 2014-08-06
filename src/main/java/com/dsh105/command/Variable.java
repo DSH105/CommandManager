@@ -102,12 +102,7 @@ public class Variable implements Comparable<Variable> {
 
         Variable variable = (Variable) o;
 
-        if (!fullName.equals(variable.fullName)) return false;
-        if (!regex.equals(variable.regex)) return false;
-        if (!name.equals(variable.name)) return false;
-        if (!range.equals(variable.range)) return false;
-        if (pattern != null ? !pattern.equals(variable.pattern) : variable.pattern != null) return false;
+        return range.equals(variable.range);
 
-        return true;
     }
 }
