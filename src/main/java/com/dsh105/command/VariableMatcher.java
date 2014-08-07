@@ -221,7 +221,11 @@ public class VariableMatcher {
     }
 
     public static boolean containsVariables(String input) {
-        return input.matches(SYNTAX_PATTERN.pattern());
+        return SYNTAX_PATTERN.matcher(input).find();
+    }
+    
+    public static boolean containsRegexVariables(String input) {
+        return REGEX_SYNTAX_PATTERN.matcher(input).find();
     }
 
 }
