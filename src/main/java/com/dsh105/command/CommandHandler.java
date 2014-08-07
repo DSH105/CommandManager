@@ -101,6 +101,12 @@ public class CommandHandler implements Comparable<CommandHandler> {
         String command = getCommandName();
         String commandToCompare = handler.getCommandName();
 
+        if (!VariableMatcher.containsRegexVariables(command) && VariableMatcher.containsRegexVariables(commandToCompare)) {
+            return -1;
+        } else if (VariableMatcher.containsRegexVariables(command) && !VariableMatcher.containsRegexVariables(commandToCompare)) {
+            return 1;
+        }
+
         if (!VariableMatcher.containsVariables(command) && VariableMatcher.containsVariables(commandToCompare)) {
             return 1;
         } else if (VariableMatcher.containsVariables(command) && !VariableMatcher.containsVariables(commandToCompare)) {
