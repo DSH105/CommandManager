@@ -23,18 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface Command {
+@Target(ElementType.METHOD)
+public @interface NestedCommand {
 
-    String command();
-
-    String description();
-
-    String[] permission() default "";
-
-    String[] aliases() default {};
-
-    String[] help() default {};
-
-    String[] usage() default CommandManager.DEFAULT_USAGE;
+    public String parentCommand() default "";
 }

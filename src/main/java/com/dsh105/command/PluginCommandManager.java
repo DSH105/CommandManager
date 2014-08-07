@@ -17,12 +17,8 @@
 
 package com.dsh105.command;
 
-import com.dsh105.command.registration.CommandRegistry;
 import org.bukkit.plugin.Plugin;
 
-/**
- * For the convenience of the {@link #getPlugin()} method
- */
 public class PluginCommandManager<T extends Plugin> extends CommandManager {
 
     public PluginCommandManager(T owningPlugin) {
@@ -31,10 +27,6 @@ public class PluginCommandManager<T extends Plugin> extends CommandManager {
 
     public PluginCommandManager(T owningPlugin, String responsePrefix) {
         super(owningPlugin, responsePrefix);
-    }
-
-    public PluginCommandManager(T owningPlugin, CommandRegistry commandRegistry, boolean enableHelpService, String responsePrefix) {
-        super(owningPlugin, commandRegistry, enableHelpService, responsePrefix);
     }
 
     @Override

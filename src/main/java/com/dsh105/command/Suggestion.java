@@ -17,7 +17,10 @@
 
 package com.dsh105.command;
 
+import com.dsh105.commodus.StringUtil;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,6 +28,10 @@ public class Suggestion {
 
     private String message;
     private ArrayList<String> suggestions = new ArrayList<>();
+
+    public Suggestion(String message, Collection<String> possibleSuggestions) {
+        this(message, possibleSuggestions.toArray(StringUtil.EMPTY_STRING_ARRAY));
+    }
 
     public Suggestion(String message, String... possibleSuggestions) {
         this.message = message;

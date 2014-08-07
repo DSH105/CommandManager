@@ -29,22 +29,22 @@ import java.util.Arrays;
 public class CommandEvent<T extends CommandSender> {
 
     private String input;
-    private CommandManager manager;
+    private ICommandManager manager;
     private String command;
     private T sender;
     private String[] args;
 
     private VariableMatcher variableMatcher;
 
-    public CommandEvent(CommandManager manager, String args, T sender) {
+    public CommandEvent(ICommandManager manager, String args, T sender) {
         this(manager, sender, args.trim().replaceAll("\\s+", " ").split("\\s"));
     }
 
-    public CommandEvent(CommandManager manager, T sender, String... args) {
+    public CommandEvent(ICommandManager manager, T sender, String... args) {
         this(manager, args[0].trim(), sender, StringUtil.combineArray(1, " ", args));
     }
 
-    public CommandEvent(CommandManager manager, String command, T sender, String... args) {
+    public CommandEvent(ICommandManager manager, String command, T sender, String... args) {
         this.manager = manager;
         this.command = command;
         this.sender = sender;
@@ -102,8 +102,8 @@ public class CommandEvent<T extends CommandSender> {
 
     public boolean canPerform(String... permissions) {
         for (String permission : permissions) {
-            if (!sender.hasPermission(permission)) {
-                respond(ResponseLevel.SEVERE, manager.getNoPermissionMessage() + (VariableMatcher.containsVariables(permission) ? " Or maybe a variable was invalid?" : ""));
+            if (!permission.isEmpty() && !sender.hasPermission(permission)) {
+                respond(ResponseLevel.SEVERE, manager.getMessenger().getNoPermissionMessage() + (VariableMatcher.containsVariables(permission) ? " Or maybe a variable was invalid?" : ""));
                 return false;
             }
         }
@@ -111,7 +111,7 @@ public class CommandEvent<T extends CommandSender> {
     }
 
     public void respond(String response) {
-        respond(response, manager.getFormatColour(), manager.getHighlightColour());
+        respond(response, manager.getMessenger().getFormatColour(), manager.getMessenger().getHighlightColour());
     }
 
     public void respond(ResponseLevel level, String response) {
@@ -119,7 +119,7 @@ public class CommandEvent<T extends CommandSender> {
     }
 
     public void respond(String response, ChatColor formatColour, ChatColor highlightColour) {
-        String message = formatColour + response.replace("{c1}", "" + formatColour).replace("{c2}", "" + highlightColour);
+        String message = formatColour + manager.getMessenger().format(response, formatColour, highlightColour);
 
         // Take care of any conversions, special formatting, etc.
         new MarkupBuilder().withText((manager.getResponsePrefix() != null && !manager.getResponsePrefix().isEmpty() ? manager.getResponsePrefix() + " " : "") + ChatColor.RESET + message).build().send(sender());

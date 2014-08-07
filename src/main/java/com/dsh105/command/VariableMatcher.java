@@ -17,7 +17,7 @@
 
 package com.dsh105.command;
 
-import com.dsh105.command.exception.CommandInvalidException;
+import com.dsh105.command.exception.InvalidCommandException;
 import com.dsh105.commodus.StringUtil;
 
 import java.util.*;
@@ -27,13 +27,14 @@ import java.util.regex.PatternSyntaxException;
 
 public class VariableMatcher {
 
-    protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(?:>|\\])", Pattern.CASE_INSENSITIVE);
-    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(?:<|\\[)(?:r:((?:(?!,n:.+)[^>\\]])+))(?:,n:([^>\\]]+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern SYNTAX_PATTERN = Pattern.compile("(<|\\[)([^>\\]]+)(>|\\])", Pattern.CASE_INSENSITIVE);
+    protected static final Pattern REGEX_SYNTAX_PATTERN = Pattern.compile("(<|\\[)r:\"((?:.(?!,n:))+)\"(?:,n:(.+))?(?:>|\\])", Pattern.CASE_INSENSITIVE);
 
     private String command;
     private String eventInput;
 
     private String syntaxPattern;
+    private String humanReadableSyntax;
     private List<String> arguments;
     private ArrayList<Variable> variables;
     private HashMap<Variable, String> matchedArguments;
@@ -49,41 +50,64 @@ public class VariableMatcher {
             variables = new ArrayList<>();
         }
         String syntaxPattern = command;
+        String humanReadableSyntax = command;
+
+        ArrayList<Variable> tempVariables = new ArrayList<>();
+
+        Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(command);
+        while (regexMatcher.find()) {
+            String fullName = regexMatcher.group(0);
+            String openingTag = regexMatcher.group(1);
+            String regex = regexMatcher.group(2);
+            String name = regexMatcher.group(3);
+            boolean continuous = fullName.endsWith("...");
+
+            try {
+                Pattern.compile(regex);
+            } catch (PatternSyntaxException e) {
+                throw new InvalidCommandException("Invalid pattern syntax for command \"" + command + "\". Variable (\"" + fullName + "\") has invalid regex: \"" + regex + "\"", e);
+            }
+
+            int startIndex = arguments.indexOf(fullName);
+            Range range = new Range(startIndex, continuous ? eventInput.length() - 1 : startIndex);
+
+            tempVariables.add(new Variable(fullName, regex, name == null ? regex : name.replace("...", ""), range, openingTag.equals("["), continuous));
+        }
 
         Matcher syntaxMatcher = SYNTAX_PATTERN.matcher(command);
 
         while (syntaxMatcher.find()) {
+            String openingTag = syntaxMatcher.group(1);
+            String name = syntaxMatcher.group(2);
+            boolean continuous = name.endsWith("...");
+            boolean optional = openingTag.equals("[");
+
             int startIndex = arguments.indexOf(syntaxMatcher.group(0));
+            Range range = new Range(startIndex, continuous ? eventInput.length() - 1 : startIndex);
 
-            Variable variable;
-            Range range = new Range(startIndex, syntaxMatcher.group(2).endsWith("...") ? eventInput.length() - 1 : startIndex);
-
-            Matcher regexMatcher = REGEX_SYNTAX_PATTERN.matcher(syntaxMatcher.group(0));
-            if (regexMatcher.matches()) {
-                String regex = regexMatcher.group(1);
-                try {
-                    Pattern.compile(regex);
-                } catch (PatternSyntaxException e) {
-                    throw new CommandInvalidException("Invalid pattern syntax for command (" + command + "): " + regex, e);
-                }
-                String name = regexMatcher.group(2);
-                variable = new Variable(syntaxMatcher.group(0), regex, name == null ? regex : name.replace("...", ""), range);
-            } else {
-                variable = new Variable(syntaxMatcher.group(0), syntaxMatcher.group(2).replace("...", ""), range);
+            Variable variable = new Variable(syntaxMatcher.group(0), name.replace("...", ""), range, optional, continuous);
+            if (!tempVariables.contains(variable)) {
+                tempVariables.add(variable);
             }
+        }
 
+        for (Variable variable : tempVariables) {
             /*
              * Conditions:
              * If the regex exists, make use of it
              * Optional args can match something or nothing
              * Varargs style arguments can match anything, including spaces
              */
-            syntaxPattern = syntaxPattern.replace(syntaxMatcher.group(0), ((syntaxMatcher.group(2).endsWith("...") ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)") + (syntaxMatcher.group(1).equals("[") ? "?" : "")));
+
+            syntaxPattern = syntaxPattern.replace(variable.getFullName(), ((variable.isContinuous() ? ("(" + (variable.getRegex().isEmpty() ? ".+" : variable.getRegex()) + ")") : "([^\\s]+)") + (variable.isOptional() ? "?" : "")));
+            humanReadableSyntax = humanReadableSyntax.replace(variable.getFullName(), variable.getOpeningTag() + variable.getName() + (variable.isContinuous() ? "..." : "") + variable.getClosingTag());
 
             variables.add(variable);
         }
+        Collections.sort(variables);
 
         this.syntaxPattern = syntaxPattern;
+        this.humanReadableSyntax = humanReadableSyntax;
         return syntaxPattern;
     }
 
@@ -92,6 +116,10 @@ public class VariableMatcher {
             buildVariableSyntax();
         }
         return Pattern.compile("\\b" + syntaxPattern + "\\b", Pattern.CASE_INSENSITIVE).matcher(eventInput).matches();
+    }
+
+    public String getHumanReadableSyntax() {
+        return humanReadableSyntax;
     }
 
     public List<Variable> getVariables() {

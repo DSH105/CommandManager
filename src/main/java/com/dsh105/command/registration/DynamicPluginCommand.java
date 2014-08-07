@@ -26,7 +26,7 @@ import org.bukkit.plugin.Plugin;
 import java.util.Arrays;
 
 /**
- * Thanks @CaptainBern <3
+ * Thanks CaptainBern ;D
  */
 public class DynamicPluginCommand extends Command implements PluginIdentifiableCommand {
 

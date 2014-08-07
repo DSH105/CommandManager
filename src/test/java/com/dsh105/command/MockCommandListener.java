@@ -32,7 +32,7 @@ public class MockCommandListener implements CommandListener {
         return true;
     }
 
-    @SubCommand
+    @NestedCommand
     @Command(
             command = "test",
             description = "Test sub command"

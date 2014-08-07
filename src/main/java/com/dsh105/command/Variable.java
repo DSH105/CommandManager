@@ -17,9 +17,12 @@
 
 package com.dsh105.command;
 
-import java.util.regex.Pattern;
+import com.dsh105.command.exception.InvalidCommandException;
 
-public class Variable {
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+public class Variable implements Comparable<Variable> {
 
     private Pattern pattern;
 
@@ -27,19 +30,27 @@ public class Variable {
     private String regex;
     private String name;
     private Range range;
+    private boolean continuous;
+    private boolean optional;
 
-    public Variable(String fullName, String name, Range range) {
-        this(fullName, "", name, range);
+    public Variable(String fullName, String name, Range range, boolean optional, boolean continuous) {
+        this(fullName, "", name, range, optional, continuous);
     }
 
-    public Variable(String fullName, String regex, String name, Range range) {
+    public Variable(String fullName, String regex, String name, Range range, boolean optional, boolean continuous) {
         this.fullName = fullName;
         this.regex = regex;
         this.name = name;
         this.range = range;
+        this.optional = optional;
+        this.continuous = continuous;
 
         if (!this.regex.isEmpty()) {
-            pattern = Pattern.compile(this.regex);
+            try {
+                pattern = Pattern.compile(this.regex);
+            } catch (PatternSyntaxException e) {
+                throw new InvalidCommandException("Invalid pattern syntax for command variable (\"" + this.fullName + "\"): \"" + this.regex + "\"", e);
+            }
         }
     }
 
@@ -61,5 +72,37 @@ public class Variable {
 
     public Range getRange() {
         return range;
+    }
+
+    public boolean isContinuous() {
+        return continuous;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
+
+    public String getOpeningTag() {
+        return isOptional() ? "[" : "<";
+    }
+
+    public String getClosingTag() {
+        return isOptional() ? "]" : ">";
+    }
+
+    @Override
+    public int compareTo(Variable variable) {
+        return variable.getRange().getStartIndex() - this.getRange().getStartIndex();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Variable variable = (Variable) o;
+
+        return range.equals(variable.range);
+
     }
 }

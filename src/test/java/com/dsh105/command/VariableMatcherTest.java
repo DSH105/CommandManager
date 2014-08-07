@@ -29,7 +29,7 @@ public class VariableMatcherTest {
 
     @Test
     public void testVariables() {
-        String[] commandSyntax = {"wow", "<much>", "doge", "<r:such|match>", "[command]"};
+        String[] commandSyntax = {"wow", "<much>", "doge", "<r:\"such|match\">", "[command]"};
         String[] command = {"wow", "variable", "doge", "such", "nothing"};
         List<String> commandSyntaxArgs = Arrays.asList(commandSyntax);
         List<String> commandArgs = Arrays.asList(command);
@@ -40,7 +40,8 @@ public class VariableMatcherTest {
         Assert.assertTrue(variableMatcher.testRegexVariables());
 
         for (Variable variable : variableMatcher.getVariables()) {
-            Assert.assertEquals(variable.getName(), commandSyntax[variable.getRange().getStartIndex()].replaceAll("r:|<|>|\\[|\\]", ""));
+            System.out.println(variable.getName());
+            Assert.assertEquals(variable.getName(), commandSyntax[variable.getRange().getStartIndex()].replaceAll("r:|\"|<|>|\\[|\\]", ""));
         }
 
         for (Map.Entry<Variable, String> entry : variableMatcher.getMatchedArguments().entrySet()) {
@@ -50,12 +51,12 @@ public class VariableMatcherTest {
 
     @Test
     public void testMatcher() {
-        VariableMatcher falseVariableMatcher = new VariableMatcher("match <r:nope,n:boolean>", "match yer");
+        VariableMatcher falseVariableMatcher = new VariableMatcher("match <r:\"nope\",n:boolean>", "match yer");
         Assert.assertEquals("yer", falseVariableMatcher.getMatchedArgumentByVariableName("boolean"));
         Assert.assertEquals("yer", falseVariableMatcher.getMatchedArgumentByVariableRegex("nope"));
         Assert.assertFalse(falseVariableMatcher.testRegexVariables());
 
-        VariableMatcher trueVariableMatcher = new VariableMatcher("match <r:yer>", "match yer");
+        VariableMatcher trueVariableMatcher = new VariableMatcher("match <r:\"yer\">", "match yer");
         Assert.assertEquals("yer", trueVariableMatcher.getMatchedArgumentByVariableName("yer"));
         Assert.assertEquals("yer", trueVariableMatcher.getMatchedArgumentByVariableRegex("yer"));
         Assert.assertTrue(trueVariableMatcher.testRegexVariables());

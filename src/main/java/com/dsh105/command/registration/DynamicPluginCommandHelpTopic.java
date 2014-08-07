@@ -17,10 +17,9 @@
 
 package com.dsh105.command.registration;
 
-import com.dsh105.command.Command;
-import com.dsh105.command.CommandListener;
+import com.dsh105.command.CommandHandler;
 import com.dsh105.command.CommandManager;
-import com.dsh105.command.CommandMethod;
+import com.dsh105.command.MatchedCommand;
 import com.dsh105.commodus.StringUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -49,15 +48,12 @@ public class DynamicPluginCommandHelpTopic extends HelpTopic {
         List<String> aliases = new ArrayList<>();
 
         if (command.getRegisteredWith() instanceof CommandManager) {
-            ArrayList<CommandListener> listeners = ((CommandManager) command.getRegisteredWith()).getCommandsFor(name.substring(1), false);
-            if (!listeners.isEmpty()) {
-                CommandMethod commandMethod = ((CommandManager) command.getRegisteredWith()).getCommandMethod(listeners.get(0), name.substring(1));
-                if (commandMethod != null) {
-                    Command dynamicCommand = commandMethod.getCommand();
-                    description = dynamicCommand.description();
-                    usage = dynamicCommand.usage();
-                    aliases = Arrays.asList(dynamicCommand.aliases());
-                }
+            MatchedCommand matchedCommand = ((CommandManager) command.getRegisteredWith()).matchCommand(name.substring(1));
+            if (matchedCommand != null) {
+                CommandHandler commandHandler = matchedCommand.getCommandHandler();
+                description = commandHandler.getCommand().description();
+                usage = commandHandler.getCommand().usage()[0];
+                aliases = Arrays.asList(commandHandler.getCommand().aliases());
             }
         }
 
