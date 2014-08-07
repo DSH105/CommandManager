@@ -108,7 +108,7 @@ public class VariableMatcher {
 
         for (String argument : arguments) {
             // Incase the actual command contains any regex
-            syntaxPattern = syntaxPattern.replace(argument, Pattern.quote(argument);
+            syntaxPattern = syntaxPattern.replace(argument, Pattern.quote(argument));
         }
 
         this.syntaxPattern = syntaxPattern;
