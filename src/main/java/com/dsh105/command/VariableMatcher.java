@@ -173,7 +173,7 @@ public class VariableMatcher {
 
             String[] input = eventInput.split("\\s");
             for (Variable variable : getVariables()) {
-                if (variable.getRange().getStartIndex() < input.length) {
+                if (variable.getRange().getStartIndex() < input.length && variable.getRange().getStartIndex() >= 0) {
                     if (variable.getRange().getEndIndex() <= variable.getRange().getStartIndex()) {
                         matchedArguments.put(variable, input[variable.getRange().getStartIndex()]);
                     } else {
