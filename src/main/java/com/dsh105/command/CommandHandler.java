@@ -96,33 +96,47 @@ public class CommandHandler implements Comparable<CommandHandler> {
         return result;
     }
 
-    @Override
-    public int compareTo(CommandHandler handler) {
-        String command = getCommandName();
-        String commandToCompare = handler.getCommandName();
-
-        if (!VariableMatcher.containsRegexVariables(command) && VariableMatcher.containsRegexVariables(commandToCompare)) {
-            return -1;
-        } else if (VariableMatcher.containsRegexVariables(command) && !VariableMatcher.containsRegexVariables(commandToCompare)) {
-            return 1;
-        }
-
-        if (!VariableMatcher.containsVariables(command) && VariableMatcher.containsVariables(commandToCompare)) {
-            return 1;
-        } else if (VariableMatcher.containsVariables(command) && !VariableMatcher.containsVariables(commandToCompare)) {
-            return -1;
-        }
-
-        // Useful for comparing certain commands
-        // e.g. "/command <hello>" against "/command sub <hello>"
+    protected static int compare(String command, String commandToCompare) {
+        /*
+         * Conditions:
+         * Commands with a great number of arguments get priority over those with less
+         * Commands with no variables get priority over those without
+         * Commands with variables later on get priority over commands with variables placed earlier in the syntax
+         * Commands with regex variables are filtered last, as sometimes the regex may override commands above, which *should* get precedence
+         * Finally, longer commands get priority over shorter commands
+         */
+        int firstArgsLength = command.split("\\s").length;
+        int secondArgsLength = commandToCompare.split("\\s").length;
+        boolean firstContainsVars = VariableMatcher.containsVariables(command);
+        boolean secondContainsVars = VariableMatcher.containsVariables(commandToCompare);
+        boolean firstContainsRegexVars = VariableMatcher.containsRegexVariables(command);
+        boolean secondContainsRegexVars = VariableMatcher.containsRegexVariables(commandToCompare);
         int variableDiff = command.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>") - commandToCompare.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>");
+
+        if (firstContainsRegexVars != secondContainsRegexVars) {
+            return firstArgsLength == secondArgsLength ? (firstContainsRegexVars ? 1 : -1) : (secondArgsLength - firstArgsLength);
+        } else {
+            if (firstContainsVars != secondContainsVars) {
+                return firstArgsLength == secondArgsLength ? (firstContainsVars ? 1 : -1) : (secondArgsLength - firstArgsLength);
+            }
+        }
+
+        // Compare difference in where first variables are placed - gives commands with other words before variables precedence
+        // e.g. "/command <hello>" against "/command sub <hello>"
         if (variableDiff != 0) {
             return variableDiff;
         }
 
         // Compare lengths - longer commands get priority as they are harder to find matches for
-        return command.length() - commandToCompare.length();
+        return firstArgsLength == secondArgsLength ? secondArgsLength - firstArgsLength : commandToCompare.length() - command.length();
     }
+
+    @Override
+    public int compareTo(CommandHandler handler) {
+        return compare(getCommandName(), handler.getCommandName());
+    }
+
+
 
     private Class<?> getSenderType() {
         Type[] genericParameterTypes = getAccessor().getGenericParameterTypes();
