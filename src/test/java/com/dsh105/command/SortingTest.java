@@ -28,7 +28,7 @@ public class SortingTest {
 
     @Test
     public void testCommandSorting() {
-        List<String> commands = Arrays.asList("test", "test <var>", "test command <var>", "test <r:\"(.+)\",n:var>", "testing");
+        List<String> commands = Arrays.asList("test", "test <var>", "such <command> <very> <wow>", "test command <var>", "test <r:\"(.+)\",n:var>", "testing");
 
         System.out.println("Sorting the following:");
         for (String command : commands) {

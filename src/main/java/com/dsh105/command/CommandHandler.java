@@ -111,14 +111,15 @@ public class CommandHandler implements Comparable<CommandHandler> {
         boolean secondContainsVars = VariableMatcher.containsVariables(commandToCompare);
         boolean firstContainsRegexVars = VariableMatcher.containsRegexVariables(command);
         boolean secondContainsRegexVars = VariableMatcher.containsRegexVariables(commandToCompare);
-        int variableDiff = command.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>") - commandToCompare.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>");
+        int variableDiff = commandToCompare.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>") - command.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>");
 
         if (firstContainsRegexVars != secondContainsRegexVars) {
-            return firstArgsLength == secondArgsLength ? (firstContainsRegexVars ? 1 : -1) : (secondArgsLength - firstArgsLength);
-        } else {
-            if (firstContainsVars != secondContainsVars) {
-                return firstArgsLength == secondArgsLength ? (firstContainsVars ? 1 : -1) : (secondArgsLength - firstArgsLength);
+            if (firstContainsRegexVars && secondContainsVars) {
+                return 1;
             }
+        }
+        if (firstContainsVars != secondContainsVars) {
+            return firstContainsVars ? -1 : 1;
         }
 
         // Compare difference in where first variables are placed - gives commands with other words before variables precedence
@@ -128,6 +129,7 @@ public class CommandHandler implements Comparable<CommandHandler> {
         }
 
         // Compare lengths - longer commands get priority as they are harder to find matches for
+        // Commands with more args also get a higher priority
         return firstArgsLength == secondArgsLength ? secondArgsLength - firstArgsLength : commandToCompare.length() - command.length();
     }
 
