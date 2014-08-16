@@ -374,6 +374,11 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
             }
 
             @Override
+            public boolean includeInHelp() {
+                return command.includeInHelp();
+            }
+
+            @Override
             public Class<? extends Annotation> annotationType() {
                 return command.annotationType();
             }
