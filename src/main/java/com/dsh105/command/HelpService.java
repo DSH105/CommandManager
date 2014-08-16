@@ -27,6 +27,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.util.ChatPaginator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -140,14 +141,17 @@ public class HelpService {
     public void prepare() {
         paginator.clear();
         for (CommandHandler commandHandler : manager.getAllRegisteredCommands()) {
-            prepare(commandHandler);
+            if (commandHandler.getCommand().includeInHelp()) {
+                prepare(commandHandler);
+            }
         }
     }
 
     public void sendPage(CommandSender sender, int pageNumber) {
         Paginator p = this.paginator;
         if (willIncludePermissionTooltip() || !willIncludePermissionListing() || !willIgnoreCommandAccess()) {
-            List<PowerMessage> messages = paginator.getRaw();
+            List<PowerMessage> messages = new ArrayList<>();
+            Collections.copy(messages, paginator.getRaw());
             Iterator<PowerMessage> iter = messages.iterator();
             while (iter.hasNext()) {
                 PowerMessage powerMessage = iter.next();
