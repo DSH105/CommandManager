@@ -151,7 +151,7 @@ public class HelpService {
         Paginator p = this.paginator;
         if (willIncludePermissionTooltip() || !willIncludePermissionListing() || !willIgnoreCommandAccess()) {
             List<PowerMessage> messages = new ArrayList<>();
-            Collections.copy(messages, paginator.getRaw());
+            messages.addAll(paginator.getRaw());
             Iterator<PowerMessage> iter = messages.iterator();
             while (iter.hasNext()) {
                 PowerMessage powerMessage = iter.next();
