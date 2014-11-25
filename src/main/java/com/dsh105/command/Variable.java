@@ -83,16 +83,16 @@ public class Variable implements Comparable<Variable> {
     }
 
     public String getOpeningTag() {
-        return isOptional() ? "[" : "<";
+        return optional ? "[" : "<";
     }
 
     public String getClosingTag() {
-        return isOptional() ? "]" : ">";
+        return optional ? "]" : ">";
     }
 
     @Override
     public int compareTo(Variable variable) {
-        return variable.getRange().getStartIndex() - this.getRange().getStartIndex();
+        return variable.range.getStartIndex() - range.getStartIndex();
     }
 
     @Override
@@ -103,6 +103,5 @@ public class Variable implements Comparable<Variable> {
         Variable variable = (Variable) o;
 
         return range.equals(variable.range);
-
     }
 }

@@ -57,7 +57,7 @@ public class CommandEvent<T extends CommandSender> {
     }
 
     public Plugin getPlugin() {
-        return getManager().getPlugin();
+        return manager.getPlugin();
     }
 
     public ICommandManager getManager() {

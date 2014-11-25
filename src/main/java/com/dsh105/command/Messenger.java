@@ -30,7 +30,7 @@ public class Messenger {
     private String commandNotFoundMessage = "That command does not exist.";
 
     public String format(String input) {
-        return format(input, getFormatColour(), getHighlightColour());
+        return format(input, formatColour, highlightColour);
     }
 
     public String format(String input, ChatColor formatColour, ChatColor highlightColour) {

@@ -72,19 +72,27 @@ public class HelpService {
     }
 
     private void prepare(CommandHandler commandHandler) {
-        String command = commandHandler.getCommandName().replaceAll("(?:r:(?:(?:(?!,n:.+)[^>\\]])+))[^,>|\\]]*", "").replaceAll(",n:", "").replace("<>", "<undefined>");
+        String commandName = commandHandler.getCommandName();
+        Matcher commandNameMatcher = VariableMatcher.REGEX_SYNTAX_PATTERN.matcher(commandName);
+        while (commandNameMatcher.find()) {
+            String openingTag = commandNameMatcher.group(1);
+            String closingTag = openingTag.equals("<") ? ">" : "]";
+            String name = commandNameMatcher.group(3) == null ? "undefined" : commandNameMatcher.group(3);
+            commandName = commandName.replace(commandNameMatcher.group(0), openingTag + name + closingTag);
+        }
         String permission = StringUtil.combineArray(", ", commandHandler.getCommand().permission()).trim();
 
         PowerMessage part = new MarkupBuilder()
                 .withText(manager.getMessenger().getHighlightColour().toString())
                 .withText("/")
-                .withText(command)
+                .withText(commandName)
                 .withText(manager.getMessenger().getFormatColour().toString())
                 .withText(" - ")
                 .withText(commandHandler.getCommand().description())
                 .withText(permission.isEmpty() ? "" : " (" + permission + ")")
                 .build();
-        part.suggest("/" + command);
+        part.group().tooltip(manager.getMessenger().format(ChatColor.ITALIC + "{c1}Click to insert {c2}\"" + commandName + "\"{c2} into the chat window."));
+        part.suggest("/" + commandName);
 
         if (commandHandler.getCommand().help().length > 0) {
             ArrayList<String> tooltipLines = new ArrayList<>();
@@ -192,7 +200,7 @@ public class HelpService {
         String pageHeader = this.pageHeader.replace("{pages}", "" + pageNumber).replace("{total}", "" + p.getPages());
 
         if (!p.exists(pageNumber)) {
-            new MarkupBuilder().withText((manager.getResponsePrefix() != null && !manager.getResponsePrefix().isEmpty() ? manager.getResponsePrefix() + " " : "") + ChatColor.RESET + String.format(getPageNotFoundMessage(), "" + pageNumber)).build().send(sender);
+            new MarkupBuilder().withText((manager.getResponsePrefix() != null && !manager.getResponsePrefix().isEmpty() ? manager.getResponsePrefix() + " " : "") + ChatColor.RESET + String.format(pageNotFoundMessage, "" + pageNumber)).build().send(sender);
             return;
         }
         sender.sendMessage(pageHeader);

@@ -424,7 +424,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
 
             // Ensure that the command handler accepts this type of CommandSender
             if (!handler.isSenderAccepted(event.sender())) {
-                event.respond(ResponseLevel.SEVERE, getMessenger().getNoAccessMessage());
+                event.respond(ResponseLevel.SEVERE, messenger.getNoAccessMessage());
                 return true;
             }
 
@@ -458,7 +458,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
                     }
                 } catch (Exception e) {
                     if (shouldShowErrorMessage()) {
-                        event.respond(ResponseLevel.SEVERE, getMessenger().getErrorMessage());
+                        event.respond(ResponseLevel.SEVERE, messenger.getErrorMessage());
                     }
                     throw new CommandInvocationException("Unhandled exception executing \"" + event.input() + "\" in " + owningPlugin.getName(), e);
                 }
@@ -467,7 +467,7 @@ public abstract class SimpleCommandManager extends CommandMatcher implements ICo
         }
 
         // Command wasn't found :(
-        event.respond(ResponseLevel.SEVERE, getMessenger().getCommandNotFoundMessage());
+        event.respond(ResponseLevel.SEVERE, messenger.getCommandNotFoundMessage());
 
         if (willSuggestCommands()) {
             // Find any suggestions from registered commands

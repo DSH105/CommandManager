@@ -22,6 +22,7 @@ import org.bukkit.command.CommandSender;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 
 public class CommandHandler implements Comparable<CommandHandler> {
 
@@ -60,15 +61,15 @@ public class CommandHandler implements Comparable<CommandHandler> {
     }
 
     public boolean isSenderAccepted(CommandSender sender) {
-        return getAcceptedSenderType().isAssignableFrom(sender.getClass());
+        return acceptedSenderType.isAssignableFrom(sender.getClass());
     }
 
     public Command getParentCommand() {
-        return getRegisteredTo().getClass().getAnnotation(Command.class);
+        return registeredTo.getClass().getAnnotation(Command.class);
     }
 
     public String getCommandName() {
-        return getCommand().command();
+        return command.command();
     }
 
     @Override
@@ -111,26 +112,33 @@ public class CommandHandler implements Comparable<CommandHandler> {
         boolean secondContainsVars = VariableMatcher.containsVariables(commandToCompare);
         boolean firstContainsRegexVars = VariableMatcher.containsRegexVariables(command);
         boolean secondContainsRegexVars = VariableMatcher.containsRegexVariables(commandToCompare);
-        int variableDiff = commandToCompare.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>") - command.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").indexOf("<>");
+        int firstVarIndex = Arrays.asList(commandToCompare.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").split("\\s")).indexOf("<>");
+        int secondVarIndex = Arrays.asList(command.replaceAll(VariableMatcher.SYNTAX_PATTERN.pattern(), "<>").split("\\s")).indexOf("<>");
+        int variableDiff = firstVarIndex - secondVarIndex;
+        int lengthComparison = firstArgsLength != secondArgsLength ? secondArgsLength - firstArgsLength : commandToCompare.length() - command.length();
 
-        if (firstContainsRegexVars != secondContainsRegexVars) {
-            if (firstContainsRegexVars && secondContainsVars) {
-                return 1;
+        if (firstContainsVars && secondContainsVars) {
+            // They both have the same variable type - compare variable position
+            // Gives commands with other words before variables priority
+            // e.g. "/command sub <hello>" is more important than "/command <hello>"
+            if (firstContainsRegexVars == secondContainsRegexVars) {
+                return variableDiff != 0 ? variableDiff : lengthComparison;
             }
-        }
-        if (firstContainsVars != secondContainsVars) {
-            return firstContainsVars ? -1 : 1;
+
+            // Regex variables get priority over normal variables
+            return variableDiff != 0 ? variableDiff : (firstContainsRegexVars ? -1 : 1);
         }
 
-        // Compare difference in where first variables are placed - gives commands with other words before variables precedence
-        // e.g. "/command <hello>" against "/command sub <hello>"
-        if (variableDiff != 0) {
-            return variableDiff;
+        if (firstContainsVars == secondContainsVars) {
+            // They both have no variables
+
+            // Compare lengths - longer commands get priority as they are harder to find matches for
+            // Commands with more args also get a higher priority
+            return lengthComparison;
         }
 
-        // Compare lengths - longer commands get priority as they are harder to find matches for
-        // Commands with more args also get a higher priority
-        return firstArgsLength == secondArgsLength ? secondArgsLength - firstArgsLength : commandToCompare.length() - command.length();
+        // One of the commands has at least one variable
+        return firstVarIndex < secondArgsLength ? 1 : (firstVarIndex < secondArgsLength ? -1 : lengthComparison);
     }
 
     @Override
@@ -138,10 +146,8 @@ public class CommandHandler implements Comparable<CommandHandler> {
         return compare(getCommandName(), handler.getCommandName());
     }
 
-
-
     private Class<?> getSenderType() {
-        Type[] genericParameterTypes = getAccessor().getGenericParameterTypes();
+        Type[] genericParameterTypes = accessor.getGenericParameterTypes();
         for (Type genericType : genericParameterTypes) {
             if (genericType instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) genericType;

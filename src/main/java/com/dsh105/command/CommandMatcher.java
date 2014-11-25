@@ -56,12 +56,16 @@ public abstract class CommandMatcher {
 
         for (CommandHandler handler : commandHandlers) {
             if (matches(handler, command, matchAliases, false)) {
-                matches.add(handler);
+                if (!matches.contains(handler)) {
+                    matches.add(handler);
+                }
             }
 
             if (enableFuzzyMatching) {
                 if (matches(handler, command, matchAliases, true)) {
-                    fuzzyMatches.add(handler);
+                    if (!matches.contains(handler)) {
+                        fuzzyMatches.add(handler);
+                    }
                 }
             }
         }
